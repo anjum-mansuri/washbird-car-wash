@@ -1,0 +1,16 @@
+{
+  "name": "carwash-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dynamic car wash website with a built-in admin panel",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^2.0.1"
+  }
+}

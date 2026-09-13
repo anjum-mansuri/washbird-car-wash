@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <radialGradient id="navy" cx="50%" cy="38%" r="70%">
+      <stop offset="0%" stop-color="#1e4f8f"/>
+      <stop offset="55%" stop-color="#123566"/>
+      <stop offset="100%" stop-color="#0a2144"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f4f7fb"/>
+      <stop offset="50%" stop-color="#aab7c7"/>
+      <stop offset="100%" stop-color="#e6ebf2"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe08a"/>
+      <stop offset="100%" stop-color="#d99a2b"/>
+    </linearGradient>
+  </defs>
+
+  <circle cx="100" cy="100" r="98" fill="url(#ring)"/>
+  <circle cx="100" cy="100" r="90" fill="url(#navy)"/>
+  <circle cx="100" cy="100" r="90" fill="none" stroke="#f4f7fb" stroke-width="2" opacity=".5"/>
+
+  <!-- wings -->
+  <path d="M100 118 C70 108 34 116 16 96 C36 100 62 92 78 100 C62 86 40 88 26 70 C48 80 74 78 88 92 Z" fill="url(#gold)"/>
+  <path d="M100 118 C130 108 166 116 184 96 C164 100 138 92 122 100 C138 86 160 88 174 70 C152 80 126 78 112 92 Z" fill="url(#gold)"/>
+
+  <!-- body / cap -->
+  <circle cx="100" cy="86" r="20" fill="#f6c892"/>
+  <circle cx="93" cy="87" r="2.2" fill="#12233f"/>
+  <circle cx="107" cy="87" r="2.2" fill="#12233f"/>
+  <path d="M92 95 q8 6 16 0" stroke="#8a5a34" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M78 72 a22 22 0 0 1 44 0 c0 -8 -8 -16 -22 -16 s-22 8 -22 16 z" fill="#173a6b"/>
+  <rect x="76" y="68" width="48" height="6" rx="3" fill="#0e2c56"/>
+  <rect x="80" y="112" width="40" height="34" rx="10" fill="#2f66b5"/>
+  <rect x="88" y="112" width="24" height="34" fill="#e7edf5" opacity=".85"/>
+
+  <!-- spray gun arm -->
+  <rect x="118" y="118" width="26" height="9" rx="4" fill="#2f66b5"/>
+  <rect x="140" y="112" width="14" height="12" rx="2" fill="#d7dee7"/>
+  <path d="M154 116 l10 -2 v8 l-10 -2 z" fill="#d7dee7"/>
+
+  <!-- ribbon -->
+  <path d="M40 150 L100 168 L160 150 L160 176 L100 190 L40 176 Z" fill="url(#gold)"/>
+  <path d="M40 150 L100 168 L160 150 L160 160 L100 178 L40 160 Z" fill="#f4d798" opacity=".6"/>
+
+  <text x="100" y="172" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="800" fill="#0a2144" letter-spacing="1">WASHBIRD</text>
+</svg>
