@@ -1,4 +1,5 @@
 node_modules/
+.claude/
 data/db.json
 data/db.json.tmp
 data/backup-*.json
