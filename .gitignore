@@ -7,3 +7,4 @@ data/.secret
 public/uploads/*
 !public/uploads/.gitkeep
 .env
+tools/
