@@ -39,6 +39,9 @@ const money = (amount, s) => {
   return s.currencyPosition === 'after' ? `${value} ${esc(s.currency)}` : `${esc(s.currency)} ${value}`;
 };
 
+/** "Starting from ₹X" for services whose final price varies, otherwise just "₹X". */
+const priceLabel = (svc, s) => (svc.priceFrom ? `Starting from ${money(svc.price, s)}` : money(svc.price, s));
+
 /** wa.me link with a pre-filled message, or '' if no WhatsApp number is set. */
 function waLink(s, text) {
   if (!s.whatsapp) return '';
@@ -154,14 +157,14 @@ function renderServices(services, s) {
               : ''
           }
           <div class="service-foot">
-            <span class="price" data-base="${Number(svc.price) || 0}">${money(svc.price, s)}</span>
+            <span class="price" data-base="${Number(svc.price) || 0}" data-from="${svc.priceFrom ? '1' : ''}">${priceLabel(svc, s)}</span>
             ${svc.duration ? `<span class="dur">${esc(svc.duration)}</span>` : ''}
           </div>
           <div class="service-actions">
             <a class="btn ghost sm" href="#booking" data-book="${esc(svc.name)}">Book this</a>
             ${
               s.whatsapp
-                ? `<a class="btn whatsapp sm" href="${waLink(s, `Hi! I'd like to book ${svc.name} (${money(svc.price, s)}${svc.duration ? ', ' + svc.duration : ''}).`)}" target="_blank" rel="noopener">${WHATSAPP_ICON} WhatsApp</a>`
+                ? `<a class="btn whatsapp sm" href="${waLink(s, `Hi! I'd like to book ${svc.name} (${priceLabel(svc, s)}${svc.duration ? ', ' + svc.duration : ''}).`)}" target="_blank" rel="noopener">${WHATSAPP_ICON} WhatsApp</a>`
                 : ''
             }
           </div>
@@ -262,19 +265,32 @@ function renderBooking(s, services) {
         </div>
         <label>Email <span class="opt">(optional)</span><input type="email" name="email" autocomplete="email" placeholder="you@example.com"></label>
         <div class="row">
-          <label>Service<select name="service">${services
-            .map((x) => `<option>${esc(x.name)}</option>`)
-            .join('')}<option>Not sure yet</option></select></label>
-          <label>Vehicle<select name="vehicle">${(s.vehicleTypes || [])
-            .map((v) => `<option>${esc(v.name)}</option>`)
+          <label>Service<select name="service" id="bookingService">${services
+            .map(
+              (x) =>
+                `<option data-price="${Number(x.price) || 0}" data-from="${x.priceFrom ? '1' : ''}" data-slots='${JSON.stringify(x.timeSlots || []).replace(/'/g, '&#39;')}'>${esc(x.name)}</option>`
+            )
+            .join('')}<option data-price="0">Not sure yet</option></select></label>
+          <label>Vehicle<select name="vehicle" id="bookingVehicle">${(s.vehicleTypes || [])
+            .map((v) => `<option data-mult="${Number(v.multiplier) || 1}">${esc(v.name)}</option>`)
             .join('')}</select></label>
         </div>
         <div class="row">
           <label>Date<input type="date" name="date" min="${todayISO()}"></label>
-          <label>Time<select name="time"><option value="">Any time</option>${(b.timeSlots || [])
+          <label><span id="bookingTimeLabel">Time</span><select name="time" id="bookingTime" data-general='${JSON.stringify(b.timeSlots || [])}'><option value="">Any time</option>${(b.timeSlots || [])
             .map((t) => `<option>${esc(t)}</option>`)
             .join('')}</select></label>
         </div>
+        <div class="row">
+          <label>Coupon code <span class="opt">(optional)</span>
+            <span class="coupon-row"><input type="text" name="couponCode" id="couponCode" placeholder="e.g. MIDWEEK25" autocapitalize="characters"><button type="button" class="btn ghost sm" id="couponApply">Apply</button></span>
+          </label>
+          <div class="price-estimate" id="priceEstimate" hidden>
+            <span class="pe-label">Estimated price</span>
+            <span class="pe-value" id="priceEstimateValue"></span>
+          </div>
+        </div>
+        <p class="form-msg" id="couponMsg" role="status"></p>
         <label>Notes <span class="opt">(optional)</span><textarea name="notes" rows="3" placeholder="Car model, plate, anything we should know"></textarea></label>
         <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
         <button class="btn primary" type="submit">Request booking</button>

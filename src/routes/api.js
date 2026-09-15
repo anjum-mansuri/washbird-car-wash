@@ -34,12 +34,12 @@ const upload = multer({
 /** Collections the admin can CRUD through the generic routes below. */
 const COLLECTIONS = {
   services: {
-    fields: ['name', 'description', 'price', 'duration', 'icon', 'features', 'popular', 'active'],
-    defaults: { name: 'New service', description: '', price: 0, duration: '', icon: '🚿', features: [], popular: false, active: true }
+    fields: ['name', 'description', 'price', 'duration', 'icon', 'features', 'popular', 'active', 'priceFrom', 'timeSlots'],
+    defaults: { name: 'New service', description: '', price: 0, duration: '', icon: '🚿', features: [], popular: false, active: true, priceFrom: false, timeSlots: [] }
   },
   offers: {
-    fields: ['title', 'description', 'badge', 'code', 'startsOn', 'endsOn', 'imageUrl', 'active'],
-    defaults: { title: 'New offer', description: '', badge: '', code: '', startsOn: '', endsOn: '', imageUrl: '', active: true }
+    fields: ['title', 'description', 'badge', 'code', 'startsOn', 'endsOn', 'imageUrl', 'active', 'discountType', 'discountValue'],
+    defaults: { title: 'New offer', description: '', badge: '', code: '', startsOn: '', endsOn: '', imageUrl: '', active: true, discountType: 'percent', discountValue: 0 }
   },
   testimonials: {
     fields: ['name', 'text', 'rating', 'role', 'active'],
@@ -103,6 +103,25 @@ router.post('/bookings', async (req, res) => {
   await db.save();
   console.log(`New booking request: ${booking.name} — ${booking.phone} — ${booking.service}`);
   res.json({ ok: true, message: s.booking.successMessage });
+});
+
+/** Coupon lookup for the booking form — public, since visitors aren't signed in. */
+router.get('/coupons/:code', (req, res) => {
+  const today = new Date().toISOString().slice(0, 10);
+  const code = String(req.params.code || '').trim().toUpperCase();
+  const offer = db.data.offers.find((o) => o.code && o.code.trim().toUpperCase() === code);
+  if (!offer || !offer.active || (offer.startsOn && offer.startsOn > today) || (offer.endsOn && offer.endsOn < today)) {
+    return res.status(404).json({ error: 'That code is not valid or has expired.' });
+  }
+  if (!offer.discountValue) {
+    return res.status(404).json({ error: 'That code has no discount configured yet — contact us to redeem it.' });
+  }
+  res.json({
+    ok: true,
+    title: offer.title,
+    discountType: offer.discountType === 'flat' ? 'flat' : 'percent',
+    discountValue: Number(offer.discountValue) || 0
+  });
 });
 
 // ------------------------------------------------------------- admin routes

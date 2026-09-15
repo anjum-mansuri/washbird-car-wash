@@ -314,7 +314,7 @@
             (s.popular ? ' <span class="badge hot">popular</span>' : '') +
             (s.active ? '' : ' <span class="badge off">hidden</span>') +
           '</strong><small>' + esc(s.description) + '</small></div>' +
-          '<div style="text-align:right;flex:none"><strong>' + esc(money(s.price)) + '</strong>' +
+          '<div style="text-align:right;flex:none"><strong>' + (s.priceFrom ? 'From ' : '') + esc(money(s.price)) + '</strong>' +
             '<div class="sub" style="color:var(--muted);font-size:.8rem">' + esc(s.duration || '') + '</div></div>' +
           '<div class="actions">' +
             '<button class="btn sm" data-up="' + s.id + '">↑</button>' +
@@ -339,17 +339,21 @@
         '</div>' +
         field('What is included <span class="hint">one per line</span>',
           '<textarea name="features" rows="4">' + esc((s.features || []).join('\n')) + '</textarea>') +
+        field('Custom booking time slots <span class="hint">one per line — leave blank to use the general time slots in Content. When set, the booking form shows a "Preferred Service Time" dropdown with just these for this service.</span>',
+          '<textarea name="timeSlots" rows="3" placeholder="e.g.\n6:15 AM\n7:00 AM">' + esc((s.timeSlots || []).join('\n')) + '</textarea>') +
         '<div class="grid-2">' +
           '<label class="switch"><input type="checkbox" name="popular"' + (s.popular ? ' checked' : '') + '><span>Mark as “Most booked”</span></label>' +
           '<label class="switch"><input type="checkbox" name="active"' + (s.active !== false ? ' checked' : '') + '><span>Show on website</span></label>' +
         '</div>' +
+        '<label class="switch"><input type="checkbox" name="priceFrom"' + (s.priceFrom ? ' checked' : '') + '><span>Price varies — show as “Starting from ' + esc(money(s.price || 0)) + '”</span></label>' +
         '<div class="modal-foot"><button type="button" class="btn" data-cancel>Cancel</button>' +
         '<button class="btn primary" type="submit">Save service</button></div></form>';
     }
 
     function submit(existing) {
       return function (values) {
-        values.features = values.features.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+        values.features = lines(values.features);
+        values.timeSlots = lines(values.timeSlots);
         var p = existing ? c.update(existing.id, values) : c.create(values);
         p.then(function () { closeModal(); toast('Saved'); viewServices(); }).catch(function (e) { toast(e.message, true); });
       };
@@ -384,7 +388,7 @@
             (o.badge ? ' <span class="badge hot">' + esc(o.badge) + '</span>' : '') +
             (expired ? ' <span class="badge off">expired</span>' : (o.active ? '' : ' <span class="badge off">hidden</span>')) +
           '</strong><small>' + esc(o.description) +
-            (o.code ? ' · code ' + esc(o.code) : '') +
+            (o.code ? ' · code ' + esc(o.code) + (o.discountValue ? ' (' + esc(o.discountType === 'flat' ? money(o.discountValue) : o.discountValue + '%') + ' off)' : '') : '') +
             (o.endsOn ? ' · until ' + esc(o.endsOn) : '') + '</small></div>' +
           '<div class="actions">' +
             '<button class="btn sm" data-up="' + o.id + '">↑</button>' +
@@ -402,7 +406,12 @@
         field('Description', '<textarea name="description" rows="2">' + esc(o.description) + '</textarea>') +
         '<div class="grid-2">' +
           field('Badge <span class="hint">e.g. 25% OFF</span>', '<input type="text" name="badge" value="' + esc(o.badge) + '">') +
-          field('Promo code <span class="hint">optional</span>', '<input type="text" name="code" value="' + esc(o.code) + '">') +
+          field('Promo code <span class="hint">customers type this into the booking form</span>', '<input type="text" name="code" value="' + esc(o.code) + '" style="text-transform:uppercase">') +
+        '</div>' +
+        '<p class="sub" style="margin:-4px 0 10px">A promo code only actually discounts the booking form price if you set a value below.</p>' +
+        '<div class="grid-2">' +
+          field('Discount type', '<select name="discountType"><option value="percent"' + (o.discountType !== 'flat' ? ' selected' : '') + '>Percent off</option><option value="flat"' + (o.discountType === 'flat' ? ' selected' : '') + '>Flat amount off</option></select>') +
+          field('Discount value <span class="hint">% or ' + esc(state.settings.currency) + '</span>', '<input type="number" name="discountValue" min="0" step="0.01" value="' + (o.discountValue || 0) + '">') +
         '</div>' +
         '<div class="grid-2">' +
           field('Starts on <span class="hint">optional</span>', '<input type="date" name="startsOn" value="' + esc(o.startsOn) + '">') +

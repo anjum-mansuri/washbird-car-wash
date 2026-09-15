@@ -228,8 +228,8 @@ p { margin: 0 0 1em; color: var(--ink-2); }
   background: #fff; border: 1px solid var(--line); border-radius: var(--radius);
   padding: 30px; box-shadow: var(--shadow); display: grid; gap: 16px;
 }
-.booking-form .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.booking-form label { display: grid; gap: 6px; font-size: .87rem; font-weight: 620; }
+.booking-form .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; min-width: 0; }
+.booking-form label { display: grid; gap: 6px; font-size: .87rem; font-weight: 620; min-width: 0; }
 .booking-form .opt { font-weight: 400; color: var(--ink-2); }
 .booking-form input, .booking-form select, .booking-form textarea {
   font: inherit; font-size: .95rem; padding: 12px 14px; border: 1px solid var(--line);
@@ -240,6 +240,19 @@ p { margin: 0 0 1em; color: var(--ink-2); }
 }
 .booking-form textarea { resize: vertical; }
 .booking-form .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.coupon-row { display: flex; gap: 8px; min-width: 0; }
+.coupon-row input { text-transform: uppercase; min-width: 0; }
+.coupon-row input::placeholder { text-transform: none; }
+.coupon-row .btn { flex: none; white-space: nowrap; }
+.price-estimate {
+  display: flex; flex-direction: column; justify-content: center; gap: 2px;
+  background: var(--bg-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px;
+}
+.price-estimate .pe-label { font-size: .78rem; color: var(--ink-2); font-weight: 600; }
+.price-estimate .pe-value { font-size: 1.05rem; font-weight: 700; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.price-estimate .pe-was { font-weight: 500; font-size: .88rem; color: var(--ink-2); }
+.price-estimate .pe-now { color: var(--accent); }
+.price-estimate .pe-save { font-size: .74rem; font-weight: 700; color: #12805c; background: #e8f8f1; padding: 2px 8px; border-radius: 999px; }
 .form-msg { margin: 0; font-size: .9rem; min-height: 1.2em; }
 .form-msg.ok { color: #12805c; }
 .form-msg.err { color: #c02626; }
