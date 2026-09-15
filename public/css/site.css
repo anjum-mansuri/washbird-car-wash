@@ -75,6 +75,8 @@ p { margin: 0 0 1em; color: var(--ink-2); }
 .nav a { text-decoration: none; font-size: .94rem; font-weight: 550; color: var(--ink-2); }
 .nav a:hover { color: var(--accent); }
 .nav a.btn { color: #fff; }
+.nav .social-icon { width: 32px; height: 32px; background: var(--bg-2); color: var(--ink-2); flex: none; }
+.nav .social-icon:hover { background: var(--accent); color: #fff; }
 .burger { display: none; background: none; border: 0; padding: 8px; cursor: pointer; }
 .burger span { display: block; width: 22px; height: 2px; background: var(--ink); margin: 4px 0; border-radius: 2px; }
 
@@ -162,6 +164,9 @@ p { margin: 0 0 1em; color: var(--ink-2); }
 .service-foot .price { font-size: 1.55rem; font-weight: 750; letter-spacing: -.02em; }
 .service-foot .dur { font-size: .85rem; color: var(--ink-2); }
 .service-card .btn { width: 100%; }
+.service-actions { display: grid; gap: 8px; }
+.btn.whatsapp { background: #25d366; border-color: #25d366; color: #fff; }
+.btn.whatsapp:hover { filter: brightness(1.06); color: #fff; }
 
 /* ---------- about ---------- */
 .about-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 56px; align-items: center; }
@@ -253,12 +258,28 @@ p { margin: 0 0 1em; color: var(--ink-2); }
 .footer p { color: rgba(255, 255, 255, .62); margin: .35em 0; font-size: .92rem; }
 .footer a { color: rgba(255, 255, 255, .82); text-decoration: none; }
 .footer a:hover { color: #fff; }
-.socials { display: flex; flex-wrap: wrap; gap: 14px; align-content: start; text-transform: capitalize; font-size: .92rem; }
+.socials { display: flex; flex-wrap: wrap; gap: 10px; align-content: start; }
+.social-icon {
+  display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+  background: rgba(255, 255, 255, .08); color: rgba(255, 255, 255, .82);
+  transition: background .15s ease, color .15s ease;
+}
+.social-icon:hover { background: var(--accent); color: #fff; }
 .foot-bottom {
   display: flex; justify-content: space-between; align-items: center; gap: 16px;
   margin-top: 36px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, .12);
   font-size: .84rem; color: rgba(255, 255, 255, .5);
 }
+
+/* ---------- floating WhatsApp button ---------- */
+.whatsapp-fab {
+  position: fixed; right: 20px; bottom: 20px; z-index: 60;
+  display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%;
+  background: #25d366; color: #fff; box-shadow: 0 10px 28px -8px rgba(37, 211, 102, .6);
+  transition: transform .15s ease;
+}
+.whatsapp-fab svg { width: 28px; height: 28px; }
+.whatsapp-fab:hover { transform: scale(1.06); color: #fff; }
 
 /* ---------- responsive ---------- */
 @media (max-width: 900px) {

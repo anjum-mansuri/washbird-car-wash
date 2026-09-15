@@ -11,6 +11,20 @@ const esc = (v) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
+// Small inline icons (currentColor, so they pick up whatever link color surrounds them).
+const WHATSAPP_ICON =
+  '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.5-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.4.1-.2 0-.4 0-.5C10 9 9.6 8 9.4 7.5c-.2-.4-.3-.4-.5-.4h-.5c-.2 0-.5.1-.7.3-.2.3-1 1-1 2.3s1 2.7 1.1 2.9c.1.2 2 3 4.8 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 1.9-1.4.2-.6.2-1.2.2-1.3-.1-.1-.3-.2-.6-.3z"/><path d="M12 2C6.5 2 2 6.5 2 12c0 1.9.5 3.6 1.4 5.2L2 22l4.9-1.3C8.4 21.6 10.1 22 12 22c5.5 0 10-4.5 10-10S17.5 2 12 2zm0 18c-1.7 0-3.3-.5-4.7-1.3l-.3-.2-3 .8.8-2.9-.2-.3C3.7 14.7 3.2 13.4 3.2 12c0-4.8 3.9-8.8 8.8-8.8s8.8 3.9 8.8 8.8-4 8.8-8.8 8.8z"/></svg>';
+
+const SOCIAL_ICONS = {
+  facebook:
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.33-.04-1.5-.14-2.8-.14C11.98 2 10 3.66 10 6.7v2.8H7v4h3V22h4z"/></svg>',
+  instagram:
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 2c2.7 0 3.06.01 4.12.06 1.06.05 1.79.22 2.43.47.66.26 1.22.6 1.77 1.15.55.55.89 1.11 1.15 1.77.25.64.42 1.37.47 2.43.05 1.06.06 1.42.06 4.12s-.01 3.06-.06 4.12c-.05 1.06-.22 1.79-.47 2.43a4.9 4.9 0 0 1-1.15 1.77 4.9 4.9 0 0 1-1.77 1.15c-.64.25-1.37.42-2.43.47-1.06.05-1.42.06-4.12.06s-3.06-.01-4.12-.06c-1.06-.05-1.79-.22-2.43-.47a4.9 4.9 0 0 1-1.77-1.15 4.9 4.9 0 0 1-1.15-1.77c-.25-.64-.42-1.37-.47-2.43C2.01 15.06 2 14.7 2 12s.01-3.06.06-4.12c.05-1.06.22-1.79.47-2.43.26-.66.6-1.22 1.15-1.77A4.9 4.9 0 0 1 5.45.53C6.09.28 6.82.11 7.88.06 8.94.01 9.3 0 12 0zm0 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 8.2a3.2 3.2 0 1 1 0-6.4 3.2 3.2 0 0 1 0 6.4zm5.2-8.4a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4z" transform="translate(0 2)"/></svg>',
+  tiktok:
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M16.6 2h-3.2v13.4a2.8 2.8 0 1 1-2-2.68V9.4a6 6 0 1 0 5.2 5.95V8.6a7.6 7.6 0 0 0 4.4 1.4V6.8a4.4 4.4 0 0 1-4.4-4.4z"/></svg>',
+  x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M18.9 2H22l-7.6 8.7L23.3 22h-7l-5.5-7.2L4.5 22H1.4l8.1-9.3L1 2h7.2l5 6.6zm-1.2 18h1.7L6.4 3.9H4.6z"/></svg>'
+};
+
 /** Multi-line admin text -> paragraphs. */
 const paras = (v) =>
   String(v ?? '')
@@ -24,6 +38,12 @@ const money = (amount, s) => {
   const value = Number.isInteger(n) ? n.toString() : n.toFixed(2);
   return s.currencyPosition === 'after' ? `${value} ${esc(s.currency)}` : `${esc(s.currency)} ${value}`;
 };
+
+/** wa.me link with a pre-filled message, or '' if no WhatsApp number is set. */
+function waLink(s, text) {
+  if (!s.whatsapp) return '';
+  return `https://wa.me/${esc(s.whatsapp.replace(/\D/g, ''))}?text=${encodeURIComponent(text)}`;
+}
 
 const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0);
 const live = (list) => list.filter((x) => x.active !== false).sort(byOrder);
@@ -137,7 +157,14 @@ function renderServices(services, s) {
             <span class="price" data-base="${Number(svc.price) || 0}">${money(svc.price, s)}</span>
             ${svc.duration ? `<span class="dur">${esc(svc.duration)}</span>` : ''}
           </div>
-          <a class="btn ghost sm" href="#booking" data-book="${esc(svc.name)}">Book this</a>
+          <div class="service-actions">
+            <a class="btn ghost sm" href="#booking" data-book="${esc(svc.name)}">Book this</a>
+            ${
+              s.whatsapp
+                ? `<a class="btn whatsapp sm" href="${waLink(s, `Hi! I'd like to book ${svc.name} (${money(svc.price, s)}${svc.duration ? ', ' + svc.duration : ''}).`)}" target="_blank" rel="noopener">${WHATSAPP_ICON} WhatsApp</a>`
+                : ''
+            }
+          </div>
         </article>`
           )
           .join('')}
@@ -326,6 +353,11 @@ ${s.logoUrl ? `<meta property="og:image" content="${esc(s.logoUrl)}">` : ''}
     </a>
     <nav class="nav" id="nav">
       ${nav.map(([href, label]) => `<a href="${href}">${esc(label)}</a>`).join('')}
+      ${
+        s.social && s.social.instagram
+          ? `<a href="${esc(s.social.instagram)}" target="_blank" rel="noopener" class="social-icon nav-instagram" title="Instagram" aria-label="Instagram">${SOCIAL_ICONS.instagram}</a>`
+          : ''
+      }
       ${showBooking ? '<a class="btn primary sm" href="#booking">Book now</a>' : ''}
     </nav>
     <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
@@ -381,7 +413,10 @@ ${s.logoUrl ? `<meta property="og:image" content="${esc(s.logoUrl)}">` : ''}
     <div class="socials">
       ${Object.entries(s.social || {})
         .filter(([, url]) => url)
-        .map(([k, url]) => `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(k)}</a>`)
+        .map(
+          ([k, url]) =>
+            `<a href="${esc(url)}" target="_blank" rel="noopener" class="social-icon" title="${esc(k)}" aria-label="${esc(k)}">${SOCIAL_ICONS[k] || esc(k)}</a>`
+        )
         .join('')}
     </div>
   </div>
@@ -390,6 +425,11 @@ ${s.logoUrl ? `<meta property="og:image" content="${esc(s.logoUrl)}">` : ''}
     <a href="/admin">Admin</a>
   </div>
 </footer>
+${
+  s.whatsapp
+    ? `<a class="whatsapp-fab" href="${waLink(s, `Hi ${s.businessName}, I'd like to know more about your services.`)}" target="_blank" rel="noopener" aria-label="Chat on WhatsApp" title="Chat on WhatsApp">${WHATSAPP_ICON}</a>`
+    : ''
+}
 <script src="/js/site.js"></script>
 </body>
 </html>`;
