@@ -27,7 +27,21 @@ app.use(
   })
 );
 
-auth.ensureAdmin();
+// Must run before any route touches db.data: loads the store on first
+// request (local file, or once per Redis/Vercel cold start) and creates
+// the default admin the first time data comes up empty.
+let bootstrapped = false;
+app.use((req, res, next) => {
+  db.ready()
+    .then(async () => {
+      if (!bootstrapped) {
+        bootstrapped = true;
+        await auth.ensureAdmin();
+      }
+    })
+    .then(() => next())
+    .catch(next);
+});
 
 // ------------------------------------------------------------- public site
 app.get('/', (_req, res) => {
@@ -87,8 +101,17 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Something went wrong on the server' });
 });
 
-app.listen(PORT, () => {
-  console.log(`\n  ${db.data.settings.businessName}`);
-  console.log(`  Website  →  http://localhost:${PORT}`);
-  console.log(`  Admin    →  http://localhost:${PORT}/admin\n`);
-});
+// Vercel imports this file to get the Express app and calls it per request
+// itself — it must not also bind a port. Only listen when run directly
+// (`node server.js` / `npm start`), which is how local dev and most other
+// hosts (Railway, Render, a VPS) run it.
+if (require.main === module) {
+  app.listen(PORT, async () => {
+    await db.ready();
+    console.log(`\n  ${db.data.settings.businessName}`);
+    console.log(`  Website  →  http://localhost:${PORT}`);
+    console.log(`  Admin    →  http://localhost:${PORT}/admin\n`);
+  });
+}
+
+module.exports = app;

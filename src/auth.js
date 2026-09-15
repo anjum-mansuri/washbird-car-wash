@@ -12,6 +12,13 @@ const SECRET_FILE = path.join(db.DATA_DIR, '.secret');
 
 function sessionSecret() {
   if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
+  if (db.USE_REDIS) {
+    // No persistent disk here (e.g. Vercel) — a file-based fallback would
+    // regenerate on every cold start and log everyone out constantly.
+    throw new Error(
+      'SESSION_SECRET environment variable is required when running with Redis storage (e.g. on Vercel).'
+    );
+  }
   if (!fs.existsSync(SECRET_FILE)) {
     fs.writeFileSync(SECRET_FILE, crypto.randomBytes(48).toString('hex'), { mode: 0o600 });
   }
@@ -35,7 +42,7 @@ function verifyPassword(password, stored) {
 }
 
 /** Creates the default admin on first boot. */
-function ensureAdmin() {
+async function ensureAdmin() {
   if (db.data.users.length === 0) {
     const username = process.env.ADMIN_USER || 'admin';
     const password = process.env.ADMIN_PASSWORD || 'admin123';
@@ -46,7 +53,7 @@ function ensureAdmin() {
       mustChangePassword: !process.env.ADMIN_PASSWORD,
       createdAt: new Date().toISOString()
     });
-    db.saveNow();
+    await db.saveNow();
     console.log(`\n  Admin account created — username: ${username}  password: ${password}`);
     console.log('  Change it from the admin panel (Account tab) before going live.\n');
   }

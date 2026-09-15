@@ -248,67 +248,127 @@ function mergeDefaults(target, defaults) {
   return target;
 }
 
-let data;
+/**
+ * Storage backend: local JSON file for normal/local runs, or Upstash Redis
+ * when its env vars are present (that's how this runs on Vercel, which has
+ * no persistent disk). Everything above and everything calling this module
+ * stays the same either way — only load/save change.
+ */
+const USE_REDIS = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+const REDIS_KEY = 'washbird:db';
+let redis = null;
+if (USE_REDIS) {
+  const { Redis } = require('@upstash/redis');
+  redis = Redis.fromEnv();
+}
 
-function load() {
+let data;
+let ready_ = false;
+let loadPromise = null;
+let lastLoad = 0;
+const STALE_MS = 8000; // re-check Redis if this instance's copy is older than this
+
+function loadFileSync() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
   if (!fs.existsSync(DB_FILE)) {
     data = seed();
-    persist();
+    persistFile();
   } else {
     data = JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
     mergeDefaults(data, seed());
   }
-  return data;
+}
+
+async function loadFromRedis() {
+  const stored = await redis.get(REDIS_KEY);
+  if (stored) {
+    data = stored;
+    mergeDefaults(data, seed());
+  } else {
+    data = seed();
+    await redis.set(REDIS_KEY, data);
+  }
+  lastLoad = Date.now();
 }
 
 let writeTimer = null;
-function persist() {
+function persistFile() {
   const tmp = DB_FILE + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
   fs.renameSync(tmp, DB_FILE);
 }
 
-/** Debounced save — many small admin edits collapse into one disk write. */
+/**
+ * Must resolve before any request is handled — call this from Express
+ * middleware. On the file backend it's a one-time sync load. On Redis it
+ * loads once per cold start and refreshes if this instance's copy is stale,
+ * so a second serverless instance picks up edits made through another one.
+ */
+async function ready() {
+  if (USE_REDIS) {
+    if (!loadPromise) loadPromise = loadFromRedis();
+    await loadPromise;
+    if (Date.now() - lastLoad > STALE_MS) await loadFromRedis();
+  } else if (!ready_) {
+    loadFileSync();
+    ready_ = true;
+  }
+}
+
+/** Debounced save — many small admin edits collapse into one write. */
 function save() {
   if (writeTimer) clearTimeout(writeTimer);
   writeTimer = setTimeout(() => {
     writeTimer = null;
-    persist();
+    if (USE_REDIS) redis.set(REDIS_KEY, data).catch((e) => console.error('Redis save failed:', e));
+    else persistFile();
   }, 120);
 }
 
-function saveNow() {
+async function saveNow() {
   if (writeTimer) {
     clearTimeout(writeTimer);
     writeTimer = null;
   }
-  persist();
+  if (USE_REDIS) {
+    lastLoad = Date.now();
+    await redis.set(REDIS_KEY, data);
+  } else {
+    persistFile();
+  }
 }
 
-/** Backup copy of db.json, kept next to it. Handy before bulk edits. */
-function backup() {
-  saveNow();
+/** Snapshot for safekeeping — a timestamped file locally, a timestamped key on Redis. */
+async function backup() {
+  await saveNow();
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  if (USE_REDIS) {
+    const key = `washbird:backup:${stamp}`;
+    await redis.set(key, data);
+    return key;
+  }
   const dest = path.join(DATA_DIR, `backup-${stamp}.json`);
   fs.copyFileSync(DB_FILE, dest);
   return dest;
 }
 
-load();
-process.on('exit', () => {
-  if (writeTimer) saveNow();
-});
+if (!USE_REDIS) {
+  process.on('exit', () => {
+    if (writeTimer) persistFile();
+  });
+}
 
 module.exports = {
   get data() {
     return data;
   },
+  ready,
   save,
   saveNow,
   backup,
   id,
   seed,
   DB_FILE,
-  DATA_DIR
+  DATA_DIR,
+  USE_REDIS
 };

@@ -8,19 +8,26 @@ const auth = require('../auth');
 
 const router = express.Router();
 
+// Vercel has no persistent disk, so image uploads go to Vercel Blob there
+// (env var it injects automatically once a Blob store is connected) and to
+// a local folder everywhere else (this PC, Railway, Render, a VPS...).
+const USE_BLOB = !!process.env.BLOB_READ_WRITE_TOKEN;
 const UPLOAD_DIR = path.join(__dirname, '..', '..', 'public', 'uploads');
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+if (!USE_BLOB) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const ALLOWED_IMAGE = /^image\/(jpeg|png|webp|gif|avif|svg\+xml)$/;
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: UPLOAD_DIR,
-    filename: (_req, file, cb) => {
-      const ext = (path.extname(file.originalname) || '.jpg').toLowerCase().slice(0, 6);
-      cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`);
-    }
-  }),
-  limits: { fileSize: 6 * 1024 * 1024 },
+  storage: USE_BLOB
+    ? multer.memoryStorage()
+    : multer.diskStorage({
+        destination: UPLOAD_DIR,
+        filename: (_req, file, cb) => {
+          const ext = (path.extname(file.originalname) || '.jpg').toLowerCase().slice(0, 6);
+          cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`);
+        }
+      }),
+  // Vercel server uploads are capped at 4.5MB per request body; stay under that.
+  limits: { fileSize: USE_BLOB ? 4 * 1024 * 1024 : 6 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => cb(null, ALLOWED_IMAGE.test(file.mimetype))
 });
 
@@ -154,15 +161,27 @@ router.delete('/bookings/:id', (req, res) => {
 
 // --- image uploads ---
 router.post('/upload', (req, res) => {
-  upload.single('image')(req, res, (err) => {
-    if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'Image is larger than 6 MB' : err.message });
+  upload.single('image')(req, res, async (err) => {
+    const limitMb = USE_BLOB ? '4' : '6';
+    if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? `Image is larger than ${limitMb} MB` : err.message });
     if (!req.file) return res.status(400).json({ error: 'Only image files are accepted' });
-    res.json({ ok: true, url: '/uploads/' + req.file.filename });
+
+    if (!USE_BLOB) return res.json({ ok: true, url: '/uploads/' + req.file.filename });
+
+    try {
+      const { put } = require('@vercel/blob');
+      const ext = (path.extname(req.file.originalname) || '.jpg').toLowerCase().slice(0, 6);
+      const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
+      const blob = await put(name, req.file.buffer, { access: 'public', contentType: req.file.mimetype });
+      res.json({ ok: true, url: blob.url });
+    } catch (e) {
+      res.status(500).json({ error: 'Upload failed: ' + e.message });
+    }
   });
 });
 
 // --- account & data ---
-router.post('/password', (req, res) => {
+router.post('/password', async (req, res) => {
   const { current, next } = req.body || {};
   if (!auth.verifyPassword(String(current || ''), req.user.password)) {
     return res.status(400).json({ error: 'Current password is not correct' });
@@ -170,7 +189,7 @@ router.post('/password', (req, res) => {
   if (String(next || '').length < 8) return res.status(400).json({ error: 'New password must be at least 8 characters' });
   req.user.password = auth.hashPassword(String(next));
   req.user.mustChangePassword = false;
-  db.saveNow();
+  await db.saveNow();
   res.json({ ok: true });
 });
 
@@ -181,9 +200,13 @@ router.get('/export', (_req, res) => {
   res.send(JSON.stringify(safe, null, 2));
 });
 
-router.post('/backup', (_req, res) => {
-  const file = path.basename(db.backup());
-  res.json({ ok: true, file });
+router.post('/backup', async (_req, res) => {
+  try {
+    const ref = await db.backup();
+    res.json({ ok: true, file: db.USE_REDIS ? ref : path.basename(ref) });
+  } catch (e) {
+    res.status(500).json({ error: 'Backup failed: ' + e.message });
+  }
 });
 
 // --- generic collection CRUD ---
@@ -233,8 +256,13 @@ router.delete('/:collection/:id', (req, res) => {
   if (index < 0) return res.status(404).json({ error: 'Not found' });
   const [removed] = req.collection.splice(index, 1);
   // Uploaded images are removed with their gallery entry.
-  if (req.collectionName === 'gallery' && removed.url && removed.url.startsWith('/uploads/')) {
-    fs.rm(path.join(UPLOAD_DIR, path.basename(removed.url)), { force: true }, () => {});
+  if (req.collectionName === 'gallery' && removed.url) {
+    if (!USE_BLOB && removed.url.startsWith('/uploads/')) {
+      fs.rm(path.join(UPLOAD_DIR, path.basename(removed.url)), { force: true }, () => {});
+    } else if (USE_BLOB && removed.url.startsWith('https://')) {
+      // Only ever fails harmlessly for a URL we didn't upload ourselves (e.g. pasted in manually).
+      require('@vercel/blob').del(removed.url).catch(() => {});
+    }
   }
   db.save();
   res.json({ ok: true });
