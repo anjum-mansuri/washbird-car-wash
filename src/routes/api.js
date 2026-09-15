@@ -73,7 +73,7 @@ function deepAssign(target, patch) {
 
 // ------------------------------------------------------------- public route
 /** Booking requests from the website form. */
-router.post('/bookings', (req, res) => {
+router.post('/bookings', async (req, res) => {
   const s = db.data.settings;
   if (!s.booking.enabled) return res.status(403).json({ error: 'Online booking is currently closed' });
 
@@ -100,7 +100,7 @@ router.post('/bookings', (req, res) => {
     createdAt: new Date().toISOString()
   };
   db.data.bookings.push(booking);
-  db.save();
+  await db.save();
   console.log(`New booking request: ${booking.name} — ${booking.phone} — ${booking.service}`);
   res.json({ ok: true, message: s.booking.successMessage });
 });
@@ -113,9 +113,9 @@ router.get('/all', (_req, res) => {
   res.json({ settings, services, offers, testimonials, gallery, bookings });
 });
 
-router.put('/settings', (req, res) => {
+router.put('/settings', async (req, res) => {
   deepAssign(db.data.settings, req.body || {});
-  db.save();
+  await db.save();
   res.json({ ok: true, settings: db.data.settings });
 });
 
@@ -135,27 +135,27 @@ router.get('/bookings/export.csv', (_req, res) => {
   res.send('﻿' + csv); // BOM so Excel reads UTF-8 correctly
 });
 
-router.post('/bookings/cleanup', (_req, res) => {
+router.post('/bookings/cleanup', async (_req, res) => {
   const before = db.data.bookings.length;
   db.data.bookings = db.data.bookings.filter((b) => b.status !== 'done' && b.status !== 'cancelled');
-  db.save();
+  await db.save();
   res.json({ ok: true, removed: before - db.data.bookings.length });
 });
 
-router.put('/bookings/:id', (req, res) => {
+router.put('/bookings/:id', async (req, res) => {
   const booking = db.data.bookings.find((b) => b.id === req.params.id);
   if (!booking) return res.status(404).json({ error: 'Not found' });
   if (req.body.status && BOOKING_STATUSES.includes(req.body.status)) booking.status = req.body.status;
   if (typeof req.body.notes === 'string') booking.notes = req.body.notes.slice(0, 1000);
-  db.save();
+  await db.save();
   res.json({ ok: true, item: booking });
 });
 
-router.delete('/bookings/:id', (req, res) => {
+router.delete('/bookings/:id', async (req, res) => {
   const index = db.data.bookings.findIndex((b) => b.id === req.params.id);
   if (index < 0) return res.status(404).json({ error: 'Not found' });
   db.data.bookings.splice(index, 1);
-  db.save();
+  await db.save();
   res.json({ ok: true });
 });
 
@@ -219,7 +219,7 @@ router.param('collection', (req, res, next, name) => {
 
 router.get('/:collection', (req, res) => res.json({ items: req.collection }));
 
-router.post('/:collection', (req, res) => {
+router.post('/:collection', async (req, res) => {
   const spec = COLLECTIONS[req.collectionName];
   const item = Object.assign(
     { id: db.id() },
@@ -228,30 +228,30 @@ router.post('/:collection', (req, res) => {
     { order: req.collection.length, createdAt: new Date().toISOString() }
   );
   req.collection.push(item);
-  db.save();
+  await db.save();
   res.status(201).json({ ok: true, item });
 });
 
-router.post('/:collection/reorder', (req, res) => {
+router.post('/:collection/reorder', async (req, res) => {
   const ids = Array.isArray(req.body.ids) ? req.body.ids : [];
   ids.forEach((id, index) => {
     const item = req.collection.find((x) => x.id === id);
     if (item) item.order = index;
   });
-  db.save();
+  await db.save();
   res.json({ ok: true });
 });
 
-router.put('/:collection/:id', (req, res) => {
+router.put('/:collection/:id', async (req, res) => {
   const spec = COLLECTIONS[req.collectionName];
   const item = req.collection.find((x) => x.id === req.params.id);
   if (!item) return res.status(404).json({ error: 'Not found' });
   Object.assign(item, pick(req.body || {}, spec.fields));
-  db.save();
+  await db.save();
   res.json({ ok: true, item });
 });
 
-router.delete('/:collection/:id', (req, res) => {
+router.delete('/:collection/:id', async (req, res) => {
   const index = req.collection.findIndex((x) => x.id === req.params.id);
   if (index < 0) return res.status(404).json({ error: 'Not found' });
   const [removed] = req.collection.splice(index, 1);
@@ -264,7 +264,7 @@ router.delete('/:collection/:id', (req, res) => {
       require('@vercel/blob').del(removed.url).catch(() => {});
     }
   }
-  db.save();
+  await db.save();
   res.json({ ok: true });
 });
 

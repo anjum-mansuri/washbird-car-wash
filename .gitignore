@@ -8,3 +8,6 @@ public/uploads/*
 !public/uploads/.gitkeep
 .env
 tools/
+
+.vercel
+.env*

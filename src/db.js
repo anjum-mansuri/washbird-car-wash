@@ -315,14 +315,24 @@ async function ready() {
   }
 }
 
-/** Debounced save — many small admin edits collapse into one write. */
+/**
+ * Save. On the file backend this is debounced (fire-and-forget is safe —
+ * the process keeps running, so a pending timer always gets to fire).
+ * On Redis it writes immediately and returns the promise: a serverless
+ * function can be frozen the instant it sends its response, so anything
+ * "scheduled for later" can simply never run. Callers should await this.
+ */
 function save() {
+  if (USE_REDIS) {
+    lastLoad = Date.now();
+    return redis.set(REDIS_KEY, data);
+  }
   if (writeTimer) clearTimeout(writeTimer);
   writeTimer = setTimeout(() => {
     writeTimer = null;
-    if (USE_REDIS) redis.set(REDIS_KEY, data).catch((e) => console.error('Redis save failed:', e));
-    else persistFile();
+    persistFile();
   }, 120);
+  return Promise.resolve();
 }
 
 async function saveNow() {
