@@ -312,7 +312,8 @@ function render(data) {
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(s.seo.metaDescription)}">
 <meta property="og:type" content="website">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
+${s.logoUrl ? `<meta property="og:image" content="${esc(s.logoUrl)}">` : ''}
+<link rel="icon" href="${s.logoUrl ? esc(s.logoUrl) : `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>`}">
 <link rel="stylesheet" href="/css/site.css">
 <style>:root{--accent:${esc(s.accentColor || '#0ea5e9')}}</style>
 </head>
@@ -359,11 +360,18 @@ function render(data) {
 </main>
 
 <footer class="footer">
+  <div class="builder-credit">
+    <img src="/img/anjum-logo.jpeg" alt="Dr. Anjum — Web Design · AI Consulting">
+    <span>Site by Dr. Anjum</span>
+  </div>
   <div class="wrap foot-grid">
-    <div>
-      <strong>${esc(s.businessName)}</strong>
-      <p>${esc(s.tagline)}</p>
-      ${s.footerNote ? `<p class="dim">${esc(s.footerNote)}</p>` : ''}
+    <div class="foot-brand">
+      ${s.logoUrl ? `<img src="${esc(s.logoUrl)}" alt="${esc(s.businessName)}" class="foot-logo">` : ''}
+      <div>
+        <strong>${esc(s.businessName)}</strong>
+        <p>${esc(s.tagline)}</p>
+        ${s.footerNote ? `<p class="dim">${esc(s.footerNote)}</p>` : ''}
+      </div>
     </div>
     <div>
       ${s.address ? `<p>${esc(s.address)}</p>` : ''}
