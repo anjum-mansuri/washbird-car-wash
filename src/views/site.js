@@ -345,6 +345,27 @@ ${s.logoUrl ? `<meta property="og:image" content="${esc(s.logoUrl)}">` : ''}
 <style>:root{--accent:${esc(s.accentColor || '#0ea5e9')}}</style>
 </head>
 <body data-currency="${esc(s.currency)}" data-currency-pos="${esc(s.currencyPosition)}">
+${
+  s.phone || s.email
+    ? `<div class="utility-bar">
+        <div class="wrap utility-inner">
+          <div class="utility-contact">
+            ${s.email ? `<a href="mailto:${esc(s.email)}">✉ ${esc(s.email)}</a>` : ''}
+            ${s.phone ? `<a href="tel:${esc(s.phone.replace(/\s/g, ''))}">☎ ${esc(s.phone)}</a>` : ''}
+          </div>
+          <div class="utility-socials">
+            ${Object.entries(s.social || {})
+              .filter(([, url]) => url)
+              .map(
+                ([k, url]) =>
+                  `<a href="${esc(url)}" target="_blank" rel="noopener" class="social-badge" title="${esc(k)}" aria-label="${esc(k)}">${SOCIAL_ICONS[k] || esc(k)}</a>`
+              )
+              .join('')}
+          </div>
+        </div>
+      </div>`
+    : ''
+}
 <header class="topbar">
   <div class="wrap bar">
     <a class="brand" href="/">
@@ -353,11 +374,6 @@ ${s.logoUrl ? `<meta property="og:image" content="${esc(s.logoUrl)}">` : ''}
     </a>
     <nav class="nav" id="nav">
       ${nav.map(([href, label]) => `<a href="${href}">${esc(label)}</a>`).join('')}
-      ${
-        s.social && s.social.instagram
-          ? `<a href="${esc(s.social.instagram)}" target="_blank" rel="noopener" class="social-icon nav-instagram" title="Instagram" aria-label="Instagram">${SOCIAL_ICONS.instagram}</a>`
-          : ''
-      }
       ${showBooking ? '<a class="btn primary sm" href="#booking">Book now</a>' : ''}
     </nav>
     <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
@@ -405,19 +421,27 @@ ${s.logoUrl ? `<meta property="og:image" content="${esc(s.logoUrl)}">` : ''}
         ${s.footerNote ? `<p class="dim">${esc(s.footerNote)}</p>` : ''}
       </div>
     </div>
+    ${
+      nav.length
+        ? `<div class="foot-links"><strong>Quick Links</strong><ul>${nav
+            .map(([href, label]) => `<li><a href="${href}">${esc(label)}</a></li>`)
+            .join('')}</ul></div>`
+        : ''
+    }
     <div>
+      <strong>Get in touch</strong>
       ${s.address ? `<p>${esc(s.address)}</p>` : ''}
       ${s.phone ? `<p><a href="tel:${esc(s.phone.replace(/\s/g, ''))}">${esc(s.phone)}</a></p>` : ''}
       ${s.email ? `<p><a href="mailto:${esc(s.email)}">${esc(s.email)}</a></p>` : ''}
-    </div>
-    <div class="socials">
-      ${Object.entries(s.social || {})
-        .filter(([, url]) => url)
-        .map(
-          ([k, url]) =>
-            `<a href="${esc(url)}" target="_blank" rel="noopener" class="social-icon" title="${esc(k)}" aria-label="${esc(k)}">${SOCIAL_ICONS[k] || esc(k)}</a>`
-        )
-        .join('')}
+      <div class="socials">
+        ${Object.entries(s.social || {})
+          .filter(([, url]) => url)
+          .map(
+            ([k, url]) =>
+              `<a href="${esc(url)}" target="_blank" rel="noopener" class="social-badge" title="${esc(k)}" aria-label="${esc(k)}">${SOCIAL_ICONS[k] || esc(k)}</a>`
+          )
+          .join('')}
+      </div>
     </div>
   </div>
   <div class="wrap foot-bottom">

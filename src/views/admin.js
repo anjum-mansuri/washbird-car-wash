@@ -37,7 +37,7 @@ function panelPage(user) {
 <div class="shell">
   <aside class="side">
     <div class="side-top">
-      <span class="mark">🚗</span>
+      <span class="mark" id="sideMark">🚗</span>
       <div>
         <strong id="sideName">Admin</strong>
         <small>Control panel</small>

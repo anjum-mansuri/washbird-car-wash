@@ -56,6 +56,10 @@
     return api('GET', '/api/all').then(function (data) {
       state = data;
       document.getElementById('sideName').textContent = data.settings.businessName;
+      var mark = document.getElementById('sideMark');
+      if (data.settings.logoUrl) {
+        mark.innerHTML = '<img src="' + esc(data.settings.logoUrl) + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:10px">';
+      }
       document.documentElement.style.setProperty('--accent', data.settings.accentColor || '#0ea5e9');
       var newCount = data.bookings.filter(function (b) { return b.status === 'new'; }).length;
       var pill = document.getElementById('newCount');

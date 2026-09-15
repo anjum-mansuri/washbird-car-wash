@@ -40,7 +40,7 @@ button, input, select, textarea { font: inherit; }
 .shell { display: grid; grid-template-columns: 250px 1fr; min-height: 100vh; }
 .side { background: var(--dark); color: #fff; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; }
 .side-top { display: flex; gap: 11px; align-items: center; padding: 22px 20px; border-bottom: 1px solid rgba(255, 255, 255, .1); }
-.side-top .mark { width: 36px; height: 36px; border-radius: 10px; background: var(--accent); display: grid; place-items: center; }
+.side-top .mark { width: 36px; height: 36px; border-radius: 10px; background: var(--accent); display: grid; place-items: center; overflow: hidden; }
 .side-top strong { display: block; font-size: .95rem; }
 .side-top small { color: rgba(255, 255, 255, .5); font-size: .78rem; }
 .side-nav { display: flex; flex-direction: column; padding: 14px 12px; gap: 2px; overflow-y: auto; flex: 1; }
