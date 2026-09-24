@@ -120,9 +120,10 @@ function renderOffers(offers, s) {
   </section>`;
 }
 
-function renderServices(services, s) {
+function renderServices(services, s, showBooking) {
   if (!services.length) return '';
   const vt = s.vehicleTypes || [];
+  const generalSlots = (s.booking && s.booking.timeSlots) || [];
   return `
   <section id="services" class="section">
     <div class="wrap">
@@ -144,8 +145,15 @@ function renderServices(services, s) {
       </div>
       <div class="service-grid">
         ${services
-          .map(
-            (svc) => `
+          .map((svc) => {
+            const slots = svc.timeSlots && svc.timeSlots.length ? svc.timeSlots : generalSlots;
+            const timePicker =
+              showBooking && slots.length
+                ? `<label class="svc-time"><span>Preferred time</span><select data-svc-time="${esc(svc.name)}"><option value="">Any time</option>${slots
+                    .map((t) => `<option>${esc(t)}</option>`)
+                    .join('')}</select></label>`
+                : '';
+            return `
         <article class="service-card${svc.popular ? ' popular' : ''}">
           ${svc.popular ? '<span class="tag">Most booked</span>' : ''}
           <div class="icon" aria-hidden="true">${esc(svc.icon || '🚿')}</div>
@@ -160,6 +168,7 @@ function renderServices(services, s) {
             <span class="price" data-base="${Number(svc.price) || 0}" data-from="${svc.priceFrom ? '1' : ''}">${priceLabel(svc, s)}</span>
             ${svc.duration ? `<span class="dur">${esc(svc.duration)}</span>` : ''}
           </div>
+          ${timePicker}
           <div class="service-actions">
             <a class="btn ghost sm" href="#booking" data-book="${esc(svc.name)}">Book this</a>
             ${
@@ -168,8 +177,8 @@ function renderServices(services, s) {
                 : ''
             }
           </div>
-        </article>`
-          )
+        </article>`;
+          })
           .join('')}
       </div>
       ${vt.length > 1 ? '<p class="note">Prices shown for <strong data-vt-label>' + esc(vt[0].name) + '</strong>. Final quote confirmed on arrival.</p>' : ''}
@@ -334,6 +343,7 @@ function render(data) {
   const gallery = sec.gallery ? live(data.gallery) : [];
   const reviews = sec.testimonials ? live(data.testimonials) : [];
   const showBooking = sec.booking && s.booking.enabled;
+  const avgRating = reviews.length ? reviews.reduce((sum, t) => sum + (Number(t.rating) || 0), 0) / reviews.length : 0;
 
   const nav = [
     offers.length && ['#offers', 'Offers'],
@@ -357,6 +367,9 @@ function render(data) {
 <meta property="og:type" content="website">
 ${s.logoUrl ? `<meta property="og:image" content="${esc(s.logoUrl)}">` : ''}
 <link rel="icon" href="${s.logoUrl ? esc(s.logoUrl) : `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>`}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/site.css">
 <style>:root{--accent:${esc(s.accentColor || '#0ea5e9')}}</style>
 </head>
@@ -398,6 +411,8 @@ ${
 
 <main>
   <section class="hero"${s.hero.imageUrl ? ` style="--hero-img:url('${esc(s.hero.imageUrl)}')"` : ''}>
+    <span class="hero-blob a" aria-hidden="true"></span>
+    <span class="hero-blob b" aria-hidden="true"></span>
     <div class="wrap hero-inner">
       <span class="eyebrow light">${esc(s.tagline)}</span>
       <h1>${esc(s.hero.title)}</h1>
@@ -407,6 +422,25 @@ ${
         ${services.length ? `<a class="btn ghost light" href="#services">${esc(s.hero.secondaryCta)}</a>` : ''}
       </div>
       ${
+        reviews.length || (sec.about && (s.about.points || []).length)
+          ? `<div class="hero-badges">
+              ${
+                reviews.length
+                  ? `<div class="hero-rating"><span class="stars">${stars(avgRating)}</span><strong>${avgRating.toFixed(1)}</strong><span class="dim">from ${reviews.length} review${reviews.length > 1 ? 's' : ''}</span></div>`
+                  : ''
+              }
+              ${
+                sec.about && (s.about.points || []).length
+                  ? `<ul class="hero-chips">${s.about.points
+                      .slice(0, 3)
+                      .map((p) => `<li>${esc(p)}</li>`)
+                      .join('')}</ul>`
+                  : ''
+              }
+            </div>`
+          : ''
+      }
+      ${
         offers.length
           ? `<div class="hero-strip">🎉 <strong>${esc(offers[0].badge || 'Offer')}</strong> — ${esc(offers[0].title)} <a href="#offers">see all offers</a></div>`
           : ''
@@ -415,7 +449,7 @@ ${
   </section>
 
   ${renderOffers(offers, s)}
-  ${renderServices(services, s)}
+  ${renderServices(services, s, showBooking)}
   ${sec.about ? renderAbout(s) : ''}
   ${renderGallery(gallery)}
   ${renderTestimonials(reviews)}

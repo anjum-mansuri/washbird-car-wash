@@ -2,6 +2,36 @@
 (function () {
   'use strict';
 
+  // --- header shadow on scroll ---
+  var topbar = document.querySelector('.topbar');
+  if (topbar) {
+    var syncTopbar = function () {
+      topbar.classList.toggle('scrolled', window.scrollY > 4);
+    };
+    syncTopbar();
+    window.addEventListener('scroll', syncTopbar, { passive: true });
+  }
+
+  // --- scroll-reveal animation on cards/sections ---
+  var revealTargets = document.querySelectorAll(
+    '.service-card, .offer-card, .review-grid blockquote, .gallery figure, .points li'
+  );
+  if (revealTargets.length && 'IntersectionObserver' in window) {
+    revealTargets.forEach(function (el) { el.classList.add('reveal'); });
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in');
+            io.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: .12, rootMargin: '0px 0px -40px 0px' }
+    );
+    revealTargets.forEach(function (el) { io.observe(el); });
+  }
+
   // --- mobile nav ---
   var burger = document.getElementById('burger');
   var nav = document.getElementById('nav');
@@ -45,13 +75,19 @@
     });
   });
 
-  // --- "Book this" buttons preselect the service ---
+  // --- "Book this" buttons preselect the service (and its card's chosen time, if any) ---
   document.querySelectorAll('[data-book]').forEach(function (link) {
     link.addEventListener('click', function () {
       var select = document.querySelector('.booking-form [name="service"]');
       if (select) {
         select.value = link.dataset.book;
         updateTimeSlotsForService();
+        var card = link.closest('.service-card');
+        var cardTime = card ? card.querySelector('[data-svc-time]') : null;
+        if (timeSelect && cardTime && cardTime.value) {
+          var available = Array.prototype.map.call(timeSelect.options, function (o) { return o.value; });
+          if (available.indexOf(cardTime.value) !== -1) timeSelect.value = cardTime.value;
+        }
         updatePriceEstimate();
       }
     });
