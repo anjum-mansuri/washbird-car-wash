@@ -215,14 +215,19 @@ function renderGallery(items) {
         ${items
           .map(
             (g) =>
-              `<figure><img src="${esc(g.url)}" alt="${esc(g.caption || 'Car wash result')}" loading="lazy">${
+              `<figure><button type="button" class="lightbox-trigger" data-lightbox-src="${esc(g.url)}" data-lightbox-caption="${esc(g.caption || '')}"><img src="${esc(g.url)}" alt="${esc(g.caption || 'Car wash result')}" loading="lazy"></button>${
                 g.caption ? `<figcaption>${esc(g.caption)}</figcaption>` : ''
               }</figure>`
           )
           .join('')}
       </div>
     </div>
-  </section>`;
+  </section>
+  <div class="lightbox" id="lightbox" hidden>
+    <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Close">&times;</button>
+    <img src="" alt="" id="lightboxImg">
+    <p class="lightbox-caption" id="lightboxCaption"></p>
+  </div>`;
 }
 
 function renderTestimonials(items) {
@@ -411,6 +416,14 @@ ${
 
 <main>
   <section class="hero"${s.hero.imageUrl ? ` style="--hero-img:url('${esc(s.hero.imageUrl)}')"` : ''}>
+    ${
+      !s.hero.imageUrl && gallery.length
+        ? `<div class="hero-slides" aria-hidden="true">${gallery
+            .slice(0, 5)
+            .map((g, i) => `<div class="hero-slide${i === 0 ? ' active' : ''}" style="background-image:url('${esc(g.url)}')"></div>`)
+            .join('')}</div>`
+        : ''
+    }
     <span class="hero-blob a" aria-hidden="true"></span>
     <span class="hero-blob b" aria-hidden="true"></span>
     <div class="wrap hero-inner">

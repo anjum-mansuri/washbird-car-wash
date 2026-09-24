@@ -2,6 +2,45 @@
 (function () {
   'use strict';
 
+  // --- hero photo slideshow (real gallery photos, when no fixed hero image is set) ---
+  var heroSlides = document.querySelectorAll('.hero-slide');
+  var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (heroSlides.length > 1 && !reducedMotion) {
+    var activeSlide = 0;
+    setInterval(function () {
+      heroSlides[activeSlide].classList.remove('active');
+      activeSlide = (activeSlide + 1) % heroSlides.length;
+      heroSlides[activeSlide].classList.add('active');
+    }, 5000);
+  }
+
+  // --- gallery lightbox ---
+  var lightbox = document.getElementById('lightbox');
+  var lightboxImg = document.getElementById('lightboxImg');
+  var lightboxCaption = document.getElementById('lightboxCaption');
+  var lightboxClose = document.getElementById('lightboxClose');
+  if (lightbox && lightboxImg) {
+    var closeLightbox = function () {
+      lightbox.hidden = true;
+      lightboxImg.src = '';
+    };
+    document.querySelectorAll('.lightbox-trigger').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        lightboxImg.src = btn.dataset.lightboxSrc;
+        lightboxImg.alt = btn.dataset.lightboxCaption || '';
+        lightboxCaption.textContent = btn.dataset.lightboxCaption || '';
+        lightbox.hidden = false;
+      });
+    });
+    if (lightboxClose) lightboxClose.addEventListener('click', closeLightbox);
+    lightbox.addEventListener('click', function (e) {
+      if (e.target === lightbox) closeLightbox();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !lightbox.hidden) closeLightbox();
+    });
+  }
+
   // --- header shadow on scroll ---
   var topbar = document.querySelector('.topbar');
   if (topbar) {

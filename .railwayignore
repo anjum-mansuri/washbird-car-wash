@@ -1,0 +1,12 @@
+node_modules/
+.claude/
+data/db.json.tmp
+data/backup-*.json
+data/.secret
+public/uploads/*
+!public/uploads/.gitkeep
+.env
+tools/
+
+.vercel
+.env*
