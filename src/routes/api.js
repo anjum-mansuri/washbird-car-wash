@@ -12,7 +12,9 @@ const router = express.Router();
 // (env var it injects automatically once a Blob store is connected) and to
 // a local folder everywhere else (this PC, Railway, Render, a VPS...).
 const USE_BLOB = !!process.env.BLOB_READ_WRITE_TOKEN;
-const UPLOAD_DIR = path.join(__dirname, '..', '..', 'public', 'uploads');
+// Overridable so a mounted persistent volume (e.g. a Railway Volume) can be
+// used instead of the container's ephemeral disk, which is wiped on redeploy.
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, '..', '..', 'public', 'uploads');
 if (!USE_BLOB) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 const ALLOWED_IMAGE = /^image\/(jpeg|png|webp|gif|avif|svg\+xml)$/;

@@ -7,7 +7,9 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
+// Overridable so a mounted persistent volume (e.g. a Railway Volume) can be
+// used instead of the container's ephemeral disk, which is wiped on redeploy.
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '..', 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 
 const id = () => crypto.randomUUID();

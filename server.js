@@ -10,7 +10,7 @@ const db = require('./src/db');
 const auth = require('./src/auth');
 const site = require('./src/views/site');
 const adminViews = require('./src/views/admin');
-const { router: apiRouter } = require('./src/routes/api');
+const { router: apiRouter, UPLOAD_DIR } = require('./src/routes/api');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +25,10 @@ app.use(
     maxAge: process.env.NODE_ENV === 'production' ? '7d' : 0
   })
 );
+// Serves uploaded images even when UPLOAD_DIR is redirected to a mounted
+// volume outside public/ (see src/routes/api.js) — a no-op path overlap
+// with the static block above when UPLOAD_DIR is left at its default.
+app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: process.env.NODE_ENV === 'production' ? '7d' : 0 }));
 
 // Must run before any route touches db.data (including auth.attachUser,
 // which reads db.data.users): loads the store on first request (local
