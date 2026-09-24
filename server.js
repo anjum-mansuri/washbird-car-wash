@@ -19,7 +19,6 @@ app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false }));
-app.use(auth.attachUser);
 
 app.use(
   express.static(path.join(__dirname, 'public'), {
@@ -27,9 +26,10 @@ app.use(
   })
 );
 
-// Must run before any route touches db.data: loads the store on first
-// request (local file, or once per Redis/Vercel cold start) and creates
-// the default admin the first time data comes up empty.
+// Must run before any route touches db.data (including auth.attachUser,
+// which reads db.data.users): loads the store on first request (local
+// file, or once per Redis/Vercel cold start) and creates the default
+// admin the first time data comes up empty.
 let bootstrapped = false;
 app.use((req, res, next) => {
   db.ready()
@@ -42,6 +42,8 @@ app.use((req, res, next) => {
     .then(() => next())
     .catch(next);
 });
+
+app.use(auth.attachUser);
 
 // ------------------------------------------------------------- public site
 app.get('/', (_req, res) => {
