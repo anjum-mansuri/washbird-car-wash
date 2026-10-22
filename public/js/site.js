@@ -204,61 +204,116 @@
   var brandLogo = brand ? brand.querySelector('img, .mark') : null;
   if (brand && brandLogo && !reducedMotion && document.body.animate) {
     var BW = 56, BH = 45, PERCH_W = 34; // flight size, and size while perched on the logo
-    var bird = document.createElement('div');
-    bird.className = 'wb-bird flying';
-    bird.innerHTML = BIRD_SVG;
-    document.body.appendChild(bird);
-
-    var vw = window.innerWidth, vh = window.innerHeight;
-    var lr = brandLogo.getBoundingClientRect();
     var ps = PERCH_W / BW;
-    var big = vw > 700 ? 1.9 : 1.3; // bigger while flying across the hero
-    // perch: sitting on the top-right rim of the round logo
-    var perchX = lr.left + lr.width / 2 + PERCH_W / 2 - 6;
-    var perchY = lr.top - PERCH_W * (BH / BW) / 2 + 11;
+    var bird = document.createElement('div');
+    bird.innerHTML = BIRD_SVG;
+    bird.title = 'Tap me!';
+    var busy = false;
+
     var at = function (x, y, face, s, rot) {
       return 'translate(' + x + 'px,' + y + 'px) rotate(' + (rot || 0) + 'deg) scale(' + face * s + ',' + s + ')';
     };
-    var path = [
-      { transform: at(vw + 120, vh * .62, -1, big, 8), offset: 0 },
-      { transform: at(vw * .66, vh * .3, -1, big * 1.05, -10), offset: .22 },
-      { transform: at(vw * .42, vh * .55, -1, big * 1.1, 12), offset: .46 },
-      { transform: at(Math.min(vw * .3, perchX + 220), vh * .34, -1, big * .85, -14), offset: .66 },
-      { transform: at(perchX + 70, perchY + 50, -1, .78, -6), offset: .84 },
-      { transform: at(perchX + 6, perchY - 22, -1, .66, 4), offset: .94 },
-      { transform: at(perchX, perchY, 1, ps, 0), offset: 1 }
-    ];
-    var flight = bird.animate(path, { duration: 3600, delay: 500, easing: 'ease-in-out', fill: 'both' });
-
-    // sparkle (Diwali) or water-droplet trail while flying
-    var trail = setInterval(function () {
-      var r = bird.getBoundingClientRect();
-      if (r.right < 0 || r.left > vw) return;
-      var d = document.createElement('span');
-      d.className = document.body.classList.contains('diwali') ? 'spark' : 'wb-drop';
-      d.style.left = r.left + r.width / 2 + 'px';
-      d.style.top = r.top + r.height * .6 + 'px';
-      document.body.appendChild(d);
-      d.animate([
-        { transform: 'translate(0,0) scale(1)', opacity: 1 },
-        { transform: 'translate(' + (Math.random() * 16 - 8) + 'px,' + (24 + Math.random() * 20) + 'px) scale(.2)', opacity: 0 }
-      ], { duration: 800, easing: 'ease-out' }).onfinish = function () { d.remove(); };
-    }, 45);
-
-    flight.onfinish = function () {
-      clearInterval(trail);
-      // re-home the bird inside the header so it scrolls with the logo
-      bird.remove();
-      flight.cancel();
-      bird.className = 'wb-bird perched';
-      bird.style.width = PERCH_W + 'px';
-      bird.style.left = brandLogo.offsetLeft + brandLogo.offsetWidth / 2 - 6 + 'px';
-      bird.style.top = brandLogo.offsetTop - PERCH_W * (BH / BW) + 11 + 'px';
-      brand.appendChild(bird);
-      bird.animate([{ translate: '0 -6px' }, { translate: '0 0' }, { translate: '0 -3px' }, { translate: '0 0' }], { duration: 500, easing: 'ease-out' });
-      brandLogo.classList.add('wb-glow');
-      confettiBurst(brandLogo, 12);
+    // centre of the bird when perched on the top-right rim of the round logo (viewport coords)
+    var perchPoint = function () {
+      var lr = brandLogo.getBoundingClientRect();
+      return { x: lr.left + lr.width / 2 + PERCH_W / 2 - 6, y: lr.top - PERCH_W * (BH / BW) / 2 + 11 };
     };
+    // last three keyframes of every flight: swoop in, turn around, settle on the logo
+    var landing = function (p) {
+      return [
+        { transform: at(p.x + 70, p.y + 50, -1, .78, -6), offset: .84 },
+        { transform: at(p.x + 6, p.y - 22, -1, .66, 4), offset: .94 },
+        { transform: at(p.x, p.y, 1, ps, 0), offset: 1 }
+      ];
+    };
+
+    /** Fly the bird along `frames` (fixed to the viewport), then perch it back on the logo. */
+    var fly = function (frames, duration, delay) {
+      busy = true;
+      bird.remove();
+      bird.className = 'wb-bird flying';
+      bird.removeAttribute('style');
+      document.body.appendChild(bird);
+      var flight = bird.animate(frames, { duration: duration, delay: delay || 0, easing: 'ease-in-out', fill: 'both' });
+
+      // sparkle (Diwali) or water-droplet trail while flying
+      var trail = setInterval(function () {
+        var r = bird.getBoundingClientRect();
+        if (r.right < 0 || r.left > window.innerWidth) return;
+        var d = document.createElement('span');
+        d.className = document.body.classList.contains('diwali') ? 'spark' : 'wb-drop';
+        d.style.left = r.left + r.width / 2 + 'px';
+        d.style.top = r.top + r.height * .6 + 'px';
+        document.body.appendChild(d);
+        d.animate([
+          { transform: 'translate(0,0) scale(1)', opacity: 1 },
+          { transform: 'translate(' + (Math.random() * 16 - 8) + 'px,' + (24 + Math.random() * 20) + 'px) scale(.2)', opacity: 0 }
+        ], { duration: 800, easing: 'ease-out' }).onfinish = function () { d.remove(); };
+      }, 45);
+
+      flight.onfinish = function () {
+        clearInterval(trail);
+        // re-home the bird inside the header so it scrolls with the logo
+        bird.remove();
+        flight.cancel();
+        bird.className = 'wb-bird perched';
+        bird.style.width = PERCH_W + 'px';
+        bird.style.left = brandLogo.offsetLeft + brandLogo.offsetWidth / 2 - 6 + 'px';
+        bird.style.top = brandLogo.offsetTop - PERCH_W * (BH / BW) + 11 + 'px';
+        brand.appendChild(bird);
+        bird.animate([{ translate: '0 -6px' }, { translate: '0 0' }, { translate: '0 -3px' }, { translate: '0 0' }], { duration: 500, easing: 'ease-out' });
+        brandLogo.classList.remove('wb-glow');
+        void brandLogo.offsetWidth;
+        brandLogo.classList.add('wb-glow');
+        confettiBurst(brandLogo, 12);
+        busy = false;
+      };
+    };
+
+    // entrance: swoop in from the right across the hero
+    (function () {
+      var vw = window.innerWidth, vh = window.innerHeight, p = perchPoint();
+      var big = vw > 700 ? 1.9 : 1.3; // bigger while flying across the hero
+      fly([
+        { transform: at(vw + 120, vh * .62, -1, big, 8), offset: 0 },
+        { transform: at(vw * .66, vh * .3, -1, big * 1.05, -10), offset: .22 },
+        { transform: at(vw * .42, vh * .55, -1, big * 1.1, 12), offset: .46 },
+        { transform: at(Math.min(vw * .3, p.x + 220), vh * .34, -1, big * .85, -14), offset: .66 }
+      ].concat(landing(p)), 3600, 500);
+    })();
+
+    // tap the perched bird: it takes off, loops around the screen and comes back
+    bird.addEventListener('click', function (e) {
+      e.preventDefault(); // it sits inside the logo's home link
+      e.stopPropagation();
+      if (busy) return;
+      var vw = window.innerWidth, vh = window.innerHeight, p = perchPoint();
+      var big = vw > 700 ? 1.7 : 1.25;
+      // little startled hop + chirp bubble before take-off
+      var chirp = document.createElement('span');
+      chirp.className = 'wb-chirp';
+      chirp.textContent = ['Wheee! 💨', 'Shine time! ✨', 'Tweet tweet! 🎶', 'Happy Diwali! 🪔'][(Math.random() * (document.body.classList.contains('diwali') ? 4 : 3)) | 0];
+      chirp.style.left = p.x + 24 + 'px';
+      chirp.style.top = p.y - 4 + 'px';
+      document.body.appendChild(chirp);
+      chirp.animate([
+        { transform: 'translate(0, 6px) scale(.6)', opacity: 0 },
+        { transform: 'translate(0, 0) scale(1)', opacity: 1, offset: .2 },
+        { transform: 'translate(4px, -4px) scale(1)', opacity: 1, offset: .75 },
+        { transform: 'translate(8px, -10px) scale(.9)', opacity: 0 }
+      ], { duration: 1600, easing: 'ease-out' }).onfinish = function () { chirp.remove(); };
+
+      fly([
+        { transform: at(p.x, p.y, 1, ps, 0), offset: 0 },
+        { transform: at(p.x + 10, p.y - 26, 1, .8, -20), offset: .05 },
+        { transform: at(p.x + 160, p.y + 120, 1, big * .9, 18), offset: .16 },
+        { transform: at(vw * .62, vh * .3, 1, big, -12), offset: .3 },
+        { transform: at(vw * .86, vh * .55, 1, big * 1.05, 30), offset: .42 },
+        { transform: at(vw * .66, vh * .78, -1, big * 1.1, -8), offset: .54 },
+        { transform: at(vw * .4, vh * .6, -1, big, 14), offset: .64 },
+        { transform: at(Math.min(vw * .32, p.x + 240), vh * .36, -1, big * .85, -14), offset: .74 }
+      ].concat(landing(p)), 4200);
+    });
   }
 
   // small sparkle burst (used when the bird lands)

@@ -607,7 +607,17 @@ p { margin: 0 0 1em; color: var(--ink-2); }
   position: fixed; left: -28px; top: -22.5px; width: 56px; z-index: 90;
   filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .3));
 }
-.wb-bird.perched { position: absolute; z-index: 2; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .3)); }
+.wb-bird.perched {
+  position: absolute; z-index: 2; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .3));
+  pointer-events: auto; cursor: pointer; padding: 4px; margin: -4px; /* bigger tap target */
+  transition: transform .2s ease;
+}
+.wb-bird.perched:hover { transform: rotate(-8deg) scale(1.12); }
+.wb-chirp {
+  position: fixed; z-index: 95; pointer-events: none; white-space: nowrap;
+  background: #fff; color: var(--ink); border: 2px solid var(--ink); border-radius: 14px 14px 14px 4px;
+  padding: 5px 11px; font-size: .8rem; font-weight: 800; box-shadow: 3px 3px 0 var(--ink);
+}
 .wb-wing { transform-box: view-box; transform-origin: 39px 34px; }
 .flying .wb-wing { animation: flap .2s ease-in-out infinite alternate; }
 .flying .wb-wing-back { animation-delay: -.05s; }
