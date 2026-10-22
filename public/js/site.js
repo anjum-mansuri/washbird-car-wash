@@ -1,4 +1,4 @@
-/* Public site behaviour: mobile nav, vehicle-type pricing, booking form. */
+/* Public site behaviour: motion, mobile nav, vehicle-type pricing, booking form. */
 (function () {
   'use strict';
 
@@ -12,6 +12,103 @@
       activeSlide = (activeSlide + 1) % heroSlides.length;
       heroSlides[activeSlide].classList.add('active');
     }, 5000);
+  }
+
+  var finePointer = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  // --- hero title: words pop in one by one, last two get the animated gradient ---
+  var heroTitle = document.querySelector('.hero h1');
+  if (heroTitle && !reducedMotion) {
+    var words = heroTitle.textContent.trim().split(/\s+/);
+    heroTitle.setAttribute('aria-label', heroTitle.textContent.trim());
+    heroTitle.innerHTML = words.map(function (w, i) {
+      var safe = w.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      var hl = words.length > 2 && i >= words.length - 2 ? ' hl' : '';
+      return '<span class="w' + hl + '" aria-hidden="true" style="--i:' + i + '">' + safe + '</span>';
+    }).join(' ');
+  }
+
+  // --- scroll progress bar ---
+  var progress = document.querySelector('.scroll-progress');
+  if (progress) {
+    var syncProgress = function () {
+      var max = document.documentElement.scrollHeight - window.innerHeight;
+      progress.style.setProperty('--p', max > 0 ? Math.min(1, window.scrollY / max) : 0);
+    };
+    syncProgress();
+    window.addEventListener('scroll', syncProgress, { passive: true });
+  }
+
+  // --- hero rating counts up from 0 ---
+  var ratingEl = document.querySelector('.hero-rating strong');
+  if (ratingEl && !reducedMotion) {
+    var target = parseFloat(ratingEl.textContent) || 0;
+    var start = null;
+    var tick = function (t) {
+      if (start === null) start = t;
+      var k = Math.min(1, (t - start) / 1400);
+      ratingEl.textContent = (target * (1 - Math.pow(1 - k, 3))).toFixed(1);
+      if (k < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+
+  // --- service cards: 3D tilt + cursor spotlight (mouse/trackpad only) ---
+  if (finePointer && !reducedMotion) {
+    document.querySelectorAll('.service-card').forEach(function (card) {
+      card.addEventListener('pointermove', function (e) {
+        var r = card.getBoundingClientRect();
+        var px = (e.clientX - r.left) / r.width;
+        var py = (e.clientY - r.top) / r.height;
+        card.style.setProperty('--mx', px * 100 + '%');
+        card.style.setProperty('--my', py * 100 + '%');
+        card.style.setProperty('--ry', (px - .5) * 8 + 'deg');
+        card.style.setProperty('--rx', (.5 - py) * 8 + 'deg');
+      });
+      card.addEventListener('pointerleave', function () {
+        card.style.setProperty('--rx', '0deg');
+        card.style.setProperty('--ry', '0deg');
+      });
+    });
+
+    // magnetic primary buttons
+    document.querySelectorAll('.btn.primary').forEach(function (btn) {
+      btn.addEventListener('pointermove', function (e) {
+        var r = btn.getBoundingClientRect();
+        var dx = (e.clientX - r.left - r.width / 2) * .18;
+        var dy = (e.clientY - r.top - r.height / 2) * .3;
+        btn.style.translate = dx + 'px ' + dy + 'px';
+      });
+      btn.addEventListener('pointerleave', function () { btn.style.translate = ''; });
+    });
+  }
+
+  // --- emoji confetti burst from an element ---
+  function confetti(fromEl) {
+    if (reducedMotion || !fromEl || !fromEl.animate) return;
+    var r = fromEl.getBoundingClientRect();
+    var cx = r.left + r.width / 2;
+    var cy = r.top + r.height / 2;
+    var bits = ['🫧', '✨', '🚗', '💦', '⭐', '🎉', '💙', '🫧'];
+    for (var i = 0; i < 32; i++) {
+      var el = document.createElement('span');
+      el.className = 'confetti';
+      el.textContent = bits[i % bits.length];
+      el.style.left = cx + 'px';
+      el.style.top = cy + 'px';
+      document.body.appendChild(el);
+      var angle = Math.random() * Math.PI * 2;
+      var dist = 90 + Math.random() * 220;
+      var dx = Math.cos(angle) * dist;
+      var dy = Math.sin(angle) * dist - 120;
+      el.animate([
+        { transform: 'translate(-50%, -50%) scale(.4) rotate(0deg)', opacity: 1 },
+        { transform: 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px)) scale(1.1) rotate(' + (Math.random() * 540 - 270) + 'deg)', opacity: 1, offset: .6 },
+        { transform: 'translate(calc(-50% + ' + dx * 1.15 + 'px), calc(-50% + ' + (dy + 260) + 'px)) scale(.9) rotate(' + (Math.random() * 720 - 360) + 'deg)', opacity: 0 }
+      ], { duration: 1400 + Math.random() * 600, easing: 'cubic-bezier(.2,.8,.3,1)' }).onfinish = (function (node) {
+        return function () { node.remove(); };
+      })(el);
+    }
   }
 
   // --- gallery lightbox ---
@@ -53,10 +150,15 @@
 
   // --- scroll-reveal animation on cards/sections ---
   var revealTargets = document.querySelectorAll(
-    '.service-card, .offer-card, .review-grid blockquote, .gallery figure, .points li'
+    '.section-head, .service-card, .offer-card, .review-grid blockquote, .gallery figure, .points li, .booking-form, .booking-copy, .contact-grid > *'
   );
-  if (revealTargets.length && 'IntersectionObserver' in window) {
-    revealTargets.forEach(function (el) { el.classList.add('reveal'); });
+  if (revealTargets.length && 'IntersectionObserver' in window && !reducedMotion) {
+    revealTargets.forEach(function (el) {
+      el.classList.add('reveal');
+      // stagger siblings so grids cascade in
+      var idx = Array.prototype.indexOf.call(el.parentNode.children, el);
+      el.style.transitionDelay = (idx % 4) * 90 + 'ms';
+    });
     var io = new IntersectionObserver(
       function (entries) {
         entries.forEach(function (entry) {
@@ -104,6 +206,9 @@
         var base = parseFloat(el.dataset.base) || 0;
         var text = formatMoney(Math.round(base * mult * 100) / 100);
         el.textContent = el.dataset.from ? 'Starting from ' + text : text;
+        el.classList.remove('bump');
+        void el.offsetWidth;
+        el.classList.add('bump');
       });
       if (label) label.textContent = btn.dataset.name;
       var vehicleSelect = document.querySelector('.booking-form [name="vehicle"]');
@@ -271,6 +376,7 @@
           if (!res.ok) throw new Error(res.body.error || 'Something went wrong');
           msg.className = 'form-msg ok';
           msg.textContent = res.body.message || 'Thanks! We will be in touch.';
+          confetti(button);
           form.reset();
           appliedCoupon = null;
           couponMsg.className = 'form-msg';
@@ -284,7 +390,7 @@
         })
         .finally(function () {
           button.disabled = false;
-          button.textContent = 'Request booking';
+          button.textContent = 'Lock in my slot 🚀';
         });
     });
   }

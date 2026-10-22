@@ -90,14 +90,41 @@ function renderHours(s) {
     .join('');
 }
 
+/** Soap bubbles drifting up the hero — fixed pseudo-random spread so markup is stable. */
+function renderBubbles() {
+  const bubbles = Array.from({ length: 16 }, (_, i) => {
+    const x = (i * 37 + 11) % 100;
+    const size = 14 + ((i * 53) % 46);
+    const dur = 9 + ((i * 29) % 9);
+    const delay = -((i * 17) % 14);
+    return `<span class="bubble" style="--x:${x}%;--s:${size}px;--d:${dur}s;--delay:${delay}s"></span>`;
+  });
+  return `<div class="bubbles" aria-hidden="true">${bubbles.join('')}</div>`;
+}
+
+/** Two crossing tape-style tickers under the hero: service names + selling points. */
+function renderTicker(services, s) {
+  const words = [...services.map((x) => x.name), ...((s.sections.about && s.about.points) || [])];
+  if (!words.length) return '';
+  const row = (list) => {
+    const items = list.map((w) => `<span>${esc(w)}</span>`).join('');
+    return `<div class="ticker-track">${items}${items}</div>`;
+  };
+  const alt = [...words].reverse();
+  return `<div class="tickers" aria-hidden="true">
+    <div class="ticker">${row(words.length < 4 ? [...words, ...words] : words)}</div>
+    <div class="ticker alt">${row(alt.length < 4 ? [...alt, ...alt] : alt)}</div>
+  </div>`;
+}
+
 function renderOffers(offers, s) {
   if (!offers.length) return '';
   return `
   <section id="offers" class="section offers">
     <div class="wrap">
       <div class="section-head">
-        <span class="eyebrow">Running now</span>
-        <h2>Current offers</h2>
+        <span class="eyebrow">🔥 Live right now</span>
+        <h2>Deals that hit different</h2>
       </div>
       <div class="offer-grid">
         ${offers
@@ -111,7 +138,7 @@ function renderOffers(offers, s) {
             ${o.code ? `<span class="code" title="Promo code">${esc(o.code)}</span>` : '<span></span>'}
             ${o.endsOn ? `<span class="until">Until ${esc(o.endsOn)}</span>` : ''}
           </div>
-          <a class="offer-link" href="#booking">Claim this offer →</a>
+          <a class="offer-link" href="#booking">Claim it <span>→</span></a>
         </article>`
           )
           .join('')}
@@ -128,8 +155,8 @@ function renderServices(services, s, showBooking) {
   <section id="services" class="section">
     <div class="wrap">
       <div class="section-head">
-        <span class="eyebrow">Menu &amp; prices</span>
-        <h2>What we do</h2>
+        <span class="eyebrow">💸 Menu &amp; prices</span>
+        <h2>Pick your glow-up ✨</h2>
         ${
           vt.length > 1
             ? `<div class="vehicle-switch" role="group" aria-label="Vehicle type">
@@ -155,7 +182,7 @@ function renderServices(services, s, showBooking) {
                 : '';
             return `
         <article class="service-card${svc.popular ? ' popular' : ''}">
-          ${svc.popular ? '<span class="tag">Most booked</span>' : ''}
+          ${svc.popular ? '<span class="tag">🔥 Most booked</span>' : ''}
           <div class="icon" aria-hidden="true">${esc(svc.icon || '🚿')}</div>
           <h3>${esc(svc.name)}</h3>
           <p>${esc(svc.description)}</p>
@@ -191,7 +218,7 @@ function renderAbout(s) {
   <section id="about" class="section about">
     <div class="wrap about-grid">
       <div>
-        <span class="eyebrow">About us</span>
+        <span class="eyebrow">🫶 Why Washbird</span>
         <h2>${esc(s.about.title)}</h2>
         ${paras(s.about.text)}
       </div>
@@ -208,8 +235,8 @@ function renderGallery(items) {
   <section id="gallery" class="section">
     <div class="wrap">
       <div class="section-head">
-        <span class="eyebrow">Our work</span>
-        <h2>Straight from the bay</h2>
+        <span class="eyebrow">📸 Our work</span>
+        <h2>Fresh outta the bay</h2>
       </div>
       <div class="gallery">
         ${items
@@ -236,16 +263,18 @@ function renderTestimonials(items) {
   <section id="reviews" class="section reviews">
     <div class="wrap">
       <div class="section-head">
-        <span class="eyebrow">Reviews</span>
-        <h2>What customers say</h2>
+        <span class="eyebrow">💬 Reviews</span>
+        <h2>The people have spoken</h2>
       </div>
       <div class="review-grid">
         ${items
           .map(
             (t) => `
         <blockquote>
-          <div class="stars">${stars(t.rating)}</div>
-          <p>${esc(t.text)}</p>
+          <div class="bubble-body">
+            <div class="stars">${stars(t.rating)}</div>
+            <p>${esc(t.text)}</p>
+          </div>
           <footer><span class="avatar">${esc(initials(t.name))}</span><span><strong>${esc(t.name)}</strong>${
             t.role ? `<em>${esc(t.role)}</em>` : ''
           }</span></footer>
@@ -263,7 +292,7 @@ function renderBooking(s, services) {
   <section id="booking" class="section booking">
     <div class="wrap booking-grid">
       <div class="booking-copy">
-        <span class="eyebrow">Booking</span>
+        <span class="eyebrow">🔒 Lock it in</span>
         <h2>${esc(b.title)}</h2>
         <p>${esc(b.subtitle)}</p>
         <ul class="contact-list">
@@ -307,7 +336,7 @@ function renderBooking(s, services) {
         <p class="form-msg" id="couponMsg" role="status"></p>
         <label>Notes <span class="opt">(optional)</span><textarea name="notes" rows="3" placeholder="Car model, plate, anything we should know"></textarea></label>
         <input type="text" name="website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
-        <button class="btn primary" type="submit">Request booking</button>
+        <button class="btn primary" type="submit">Lock in my slot 🚀</button>
         <p class="form-msg" id="bookingMsg" role="status"></p>
       </form>
     </div>
@@ -319,8 +348,8 @@ function renderContact(s) {
   <section id="contact" class="section contact">
     <div class="wrap contact-grid">
       <div>
-        <span class="eyebrow">Find us</span>
-        <h2>Opening hours &amp; location</h2>
+        <span class="eyebrow">📍 Pull up</span>
+        <h2>Hours &amp; location</h2>
         <ul class="hours">${renderHours(s)}</ul>
         ${s.address ? `<p class="addr">${esc(s.address)}</p>` : ''}
         <div class="cta-row">
@@ -374,11 +403,12 @@ ${s.logoUrl ? `<meta property="og:image" content="${esc(s.logoUrl)}">` : ''}
 <link rel="icon" href="${s.logoUrl ? esc(s.logoUrl) : `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>`}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/site.css">
 <style>:root{--accent:${esc(s.accentColor || '#0ea5e9')}}</style>
 </head>
 <body data-currency="${esc(s.currency)}" data-currency-pos="${esc(s.currencyPosition)}">
+<div class="scroll-progress" aria-hidden="true"></div>
 ${
   s.phone || s.email
     ? `<div class="utility-bar">
@@ -426,6 +456,9 @@ ${
     }
     <span class="hero-blob a" aria-hidden="true"></span>
     <span class="hero-blob b" aria-hidden="true"></span>
+    <span class="hero-blob c" aria-hidden="true"></span>
+    ${renderBubbles()}
+    <span class="hero-sticker" aria-hidden="true">🫧 fresh.<br>clean.<br>iconic.</span>
     <div class="wrap hero-inner">
       <span class="eyebrow light">${esc(s.tagline)}</span>
       <h1>${esc(s.hero.title)}</h1>
@@ -460,6 +493,7 @@ ${
       }
     </div>
   </section>
+  ${renderTicker(services, s)}
 
   ${renderOffers(offers, s)}
   ${renderServices(services, s, showBooking)}
@@ -507,6 +541,7 @@ ${
       </div>
     </div>
   </div>
+  <p class="foot-wordmark" aria-hidden="true">${esc(s.businessName.split(/\s+/)[0] || s.businessName)}</p>
   <div class="wrap foot-bottom">
     <span>© ${new Date().getFullYear()} ${esc(s.businessName)}</span>
     <a href="/admin">Admin</a>

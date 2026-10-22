@@ -35,7 +35,7 @@ Deep Interior Wash is flagged "price varies" (a per-service checkbox in Services
 - **Live price estimate**: recalculates automatically as the customer changes Service, Vehicle, or applies a coupon.
 - **Per-service time slots**: a service can carry its own custom list of bookable times (Services → Edit → "Custom booking time slots"). When such a service is selected in the booking form, the Time field relabels to "Preferred Service Time" and only shows that service's slots; otherwise it falls back to the general time slots (Content tab). Currently set for **Daily Exterior Shine** and **Celebrity Care**: 6:15 AM, 7:00 AM, 8:00 AM, 8:30 AM.
 
-⚠️ **Known bug, not yet fixed**: below roughly 480px viewport width, the coupon-code row (input + Apply button) overflows the booking form horizontally instead of wrapping. Tried an initial `min-width: 0` fix on the row/label/input — didn't resolve it. Needs more digging next session (check `.price-estimate` sibling in the same grid row, and whether the grid track itself needs the `min-width:0`, not just the item).
+**Fixed (2026-10-22)**: the coupon-code row used to overflow the booking form below ~480px. Cause was the grid *tracks* (`1fr` = `minmax(auto, 1fr)`) refusing to shrink below their content; switching `.booking-grid` / `.booking-form .row` to `minmax(0, 1fr)` columns fixed it.
 
 ## ⚠️ Placeholder info — update before going live
 
