@@ -599,6 +599,48 @@ p { margin: 0 0 1em; color: var(--ink-2); }
 .whatsapp-fab svg { width: 30px; height: 30px; }
 .whatsapp-fab:hover { transform: scale(1.1) rotate(-8deg); color: var(--ink); }
 
+/* ---------- Washbird mascot (flies in, perches on the logo) ---------- */
+.brand { position: relative; }
+.wb-bird { pointer-events: none; line-height: 0; }
+.wb-bird svg { width: 100%; height: auto; overflow: visible; display: block; }
+.wb-bird.flying {
+  position: fixed; left: -28px; top: -22.5px; width: 56px; z-index: 90;
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, .3));
+}
+.wb-bird.perched { position: absolute; z-index: 2; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .3)); }
+.wb-wing { transform-box: view-box; transform-origin: 39px 34px; }
+.flying .wb-wing { animation: flap .2s ease-in-out infinite alternate; }
+.flying .wb-wing-back { animation-delay: -.05s; }
+.flying .wb-feet { opacity: 0; }
+@keyframes flap { from { transform: scaleY(1); } to { transform: scaleY(-.8); } }
+.perched .wb-wing { transform: rotate(-34deg) scaleY(.42); }
+.perched .wb-wing-front { animation: flutter 9s ease-in-out 2s infinite; }
+@keyframes flutter {
+  0%, 86%, 100% { transform: rotate(-34deg) scaleY(.42); }
+  89%, 95% { transform: rotate(0deg) scaleY(.95); }
+  92%, 98% { transform: rotate(-20deg) scaleY(-.4); }
+}
+.perched svg { animation: breathe 3s ease-in-out infinite; transform-origin: 50% 90%; }
+@keyframes breathe { 50% { transform: scale(1.04, .97); } }
+.wb-head { transform-box: view-box; transform-origin: 56px 34px; }
+.perched .wb-head { animation: headTilt 7s ease-in-out 1s infinite; }
+@keyframes headTilt { 0%, 62%, 100% { transform: rotate(0); } 68%, 80% { transform: rotate(-12deg); } 86% { transform: rotate(6deg); } }
+.wb-eye { transform-box: fill-box; transform-origin: center; }
+.perched .wb-eye { animation: blink 4.5s infinite; }
+@keyframes blink { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+.wb-garland { display: none; }
+.diwali .wb-garland { display: inline; }
+.wb-drop {
+  position: fixed; z-index: 89; width: 7px; height: 9px; pointer-events: none;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(circle at 35% 35%, #fff, #7dd3fc 45%, #0ea5e9);
+}
+.wb-glow { animation: logoGlow 1.4s ease-out; }
+@keyframes logoGlow {
+  0% { box-shadow: 0 0 0 0 rgba(255, 210, 63, .95); filter: brightness(1.4); }
+  100% { box-shadow: 0 0 0 18px rgba(255, 210, 63, 0); filter: none; }
+}
+
 /* ---------- confetti (booking success) ---------- */
 .confetti {
   position: fixed; z-index: 120; pointer-events: none; font-size: 1.4rem; line-height: 1;

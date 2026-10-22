@@ -171,6 +171,114 @@
     }, { passive: true });
   }
 
+  // --- Washbird mascot: flies in on page load and perches on the header logo ---
+  var BIRD_SVG =
+    '<svg viewBox="0 0 80 64" aria-hidden="true">' +
+    '<defs>' +
+      '<linearGradient id="wbBody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#0b3d91"/></linearGradient>' +
+      '<linearGradient id="wbWing" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#cfd8e3"/><stop offset="1" stop-color="#8e9bab"/></linearGradient>' +
+    '</defs>' +
+    '<g class="wb-wing wb-wing-back"><path d="M38 33 C30 15 18 7 5 5 C13 11 15 15 13 19 C19 19 21 23 19 27 C25 27 30 30 38 35 Z" fill="#9fb0c4" stroke="#1e3a8a" stroke-width="1.2"/></g>' +
+    '<path d="M24 36 L5 28 L9 36 L4 43 L24 42 Z" fill="#1e40af" stroke="#0b2a6b" stroke-width="1.2"/>' +
+    '<path d="M22 37 L9 33 L12 38" fill="none" stroke="#f2b705" stroke-width="1.5"/>' +
+    '<ellipse cx="40" cy="38" rx="19" ry="14" fill="url(#wbBody)" stroke="#0b2a6b" stroke-width="1.4"/>' +
+    '<ellipse cx="44" cy="43" rx="11" ry="7" fill="#bfdbfe"/>' +
+    '<g class="wb-feet"><path d="M38 51 L36 57 M36 57 L33 58 M36 57 L37 59 M46 51 L46 57 M46 57 L43 58 M46 57 L48 59" stroke="#f97316" stroke-width="2" stroke-linecap="round" fill="none"/></g>' +
+    '<g class="wb-head">' +
+      '<circle cx="57" cy="26" r="11.5" fill="url(#wbBody)" stroke="#0b2a6b" stroke-width="1.4"/>' +
+      '<path d="M46 23 C47 13 64 11 68 20 L76 21 C76 24 70 24 66 23 Z" fill="#1d4ed8" stroke="#0b2a6b" stroke-width="1.2"/>' +
+      '<text x="56.5" y="20.5" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="7" fill="#fff" text-anchor="middle">W</text>' +
+      '<g class="wb-eye"><circle cx="61" cy="27" r="3.4" fill="#fff"/><circle cx="62" cy="27.3" r="1.8" fill="#0d0d1a"/><circle cx="62.6" cy="26.5" r=".6" fill="#fff"/></g>' +
+      '<path d="M67 28 L77 31 L67 33 Z" fill="#f59e0b" stroke="#b45309" stroke-width="1"/>' +
+      '<circle cx="55" cy="31" r="2.2" fill="#f472b6" opacity=".55"/>' +
+    '</g>' +
+    '<g class="wb-garland">' +
+      '<circle cx="47" cy="35" r="2.6" fill="#ff8c00"/><circle cx="51" cy="37" r="2.6" fill="#ffd23f"/><circle cx="55" cy="37.5" r="2.6" fill="#ff8c00"/><circle cx="59" cy="36" r="2.6" fill="#ffd23f"/><circle cx="62" cy="33" r="2.4" fill="#ff8c00"/>' +
+    '</g>' +
+    '<g class="wb-wing wb-wing-front"><path d="M40 34 C32 14 20 5 6 3 C14 9 16 13 14 17 C20 17 22 21 20 25 C26 25 31 29 40 36 Z" fill="url(#wbWing)" stroke="#1e3a8a" stroke-width="1.3"/>' +
+      '<path d="M6 3 C18 6 30 14 37 30" fill="none" stroke="#f2b705" stroke-width="2.2" stroke-linecap="round"/>' +
+      '<path d="M16 18 C24 20 30 25 35 31 M21 26 C27 27 31 30 35 33" fill="none" stroke="#8e9bab" stroke-width="1"/></g>' +
+    '</svg>';
+
+  var brand = document.querySelector('.topbar .brand');
+  var brandLogo = brand ? brand.querySelector('img, .mark') : null;
+  if (brand && brandLogo && !reducedMotion && document.body.animate) {
+    var BW = 56, BH = 45, PERCH_W = 34; // flight size, and size while perched on the logo
+    var bird = document.createElement('div');
+    bird.className = 'wb-bird flying';
+    bird.innerHTML = BIRD_SVG;
+    document.body.appendChild(bird);
+
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var lr = brandLogo.getBoundingClientRect();
+    var ps = PERCH_W / BW;
+    var big = vw > 700 ? 1.9 : 1.3; // bigger while flying across the hero
+    // perch: sitting on the top-right rim of the round logo
+    var perchX = lr.left + lr.width / 2 + PERCH_W / 2 - 6;
+    var perchY = lr.top - PERCH_W * (BH / BW) / 2 + 11;
+    var at = function (x, y, face, s, rot) {
+      return 'translate(' + x + 'px,' + y + 'px) rotate(' + (rot || 0) + 'deg) scale(' + face * s + ',' + s + ')';
+    };
+    var path = [
+      { transform: at(vw + 120, vh * .62, -1, big, 8), offset: 0 },
+      { transform: at(vw * .66, vh * .3, -1, big * 1.05, -10), offset: .22 },
+      { transform: at(vw * .42, vh * .55, -1, big * 1.1, 12), offset: .46 },
+      { transform: at(Math.min(vw * .3, perchX + 220), vh * .34, -1, big * .85, -14), offset: .66 },
+      { transform: at(perchX + 70, perchY + 50, -1, .78, -6), offset: .84 },
+      { transform: at(perchX + 6, perchY - 22, -1, .66, 4), offset: .94 },
+      { transform: at(perchX, perchY, 1, ps, 0), offset: 1 }
+    ];
+    var flight = bird.animate(path, { duration: 3600, delay: 500, easing: 'ease-in-out', fill: 'both' });
+
+    // sparkle (Diwali) or water-droplet trail while flying
+    var trail = setInterval(function () {
+      var r = bird.getBoundingClientRect();
+      if (r.right < 0 || r.left > vw) return;
+      var d = document.createElement('span');
+      d.className = document.body.classList.contains('diwali') ? 'spark' : 'wb-drop';
+      d.style.left = r.left + r.width / 2 + 'px';
+      d.style.top = r.top + r.height * .6 + 'px';
+      document.body.appendChild(d);
+      d.animate([
+        { transform: 'translate(0,0) scale(1)', opacity: 1 },
+        { transform: 'translate(' + (Math.random() * 16 - 8) + 'px,' + (24 + Math.random() * 20) + 'px) scale(.2)', opacity: 0 }
+      ], { duration: 800, easing: 'ease-out' }).onfinish = function () { d.remove(); };
+    }, 45);
+
+    flight.onfinish = function () {
+      clearInterval(trail);
+      // re-home the bird inside the header so it scrolls with the logo
+      bird.remove();
+      flight.cancel();
+      bird.className = 'wb-bird perched';
+      bird.style.width = PERCH_W + 'px';
+      bird.style.left = brandLogo.offsetLeft + brandLogo.offsetWidth / 2 - 6 + 'px';
+      bird.style.top = brandLogo.offsetTop - PERCH_W * (BH / BW) + 11 + 'px';
+      brand.appendChild(bird);
+      bird.animate([{ translate: '0 -6px' }, { translate: '0 0' }, { translate: '0 -3px' }, { translate: '0 0' }], { duration: 500, easing: 'ease-out' });
+      brandLogo.classList.add('wb-glow');
+      confettiBurst(brandLogo, 12);
+    };
+  }
+
+  // small sparkle burst (used when the bird lands)
+  function confettiBurst(el, n) {
+    var r = el.getBoundingClientRect();
+    var gold = document.body.classList.contains('diwali');
+    for (var i = 0; i < n; i++) {
+      var s = document.createElement('span');
+      s.className = gold ? 'spark' : 'wb-drop';
+      s.style.left = r.left + r.width / 2 + 'px';
+      s.style.top = r.top + r.height / 2 + 'px';
+      document.body.appendChild(s);
+      var a = (i / n) * Math.PI * 2;
+      s.animate([
+        { transform: 'translate(0,0) scale(1.2)', opacity: 1 },
+        { transform: 'translate(' + Math.cos(a) * 40 + 'px,' + Math.sin(a) * 40 + 'px) scale(.2)', opacity: 0 }
+      ], { duration: 700, easing: 'ease-out' }).onfinish = (function (node) { return function () { node.remove(); }; })(s);
+    }
+  }
+
   // --- emoji confetti burst from an element ---
   function confetti(fromEl) {
     if (reducedMotion || !fromEl || !fromEl.animate) return;
