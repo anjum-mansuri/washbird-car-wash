@@ -635,6 +635,10 @@
             '<option value="before"' + (s.currencyPosition === 'before' ? ' selected' : '') + '>Before (AED 50)</option>' +
             '<option value="after"' + (s.currencyPosition === 'after' ? ' selected' : '') + '>After (50 AED)</option></select>') +
         '</div>' +
+        field('Festive theme <span class="hint">Auto turns the Diwali look on 3 weeks before Diwali and off a week after</span>',
+          '<select name="festiveTheme">' + [['auto', 'Auto (Diwali season only)'], ['diwali', 'Diwali — always on'], ['off', 'Off']].map(function (o) {
+            return '<option value="' + o[0] + '"' + ((s.festiveTheme || 'auto') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+          }).join('') + '</select>') +
       '</div>' +
 
       '<div class="card"><h2>Opening hours</h2>' +
@@ -688,7 +692,7 @@
       save({
         businessName: v.businessName, tagline: v.tagline, phone: v.phone, whatsapp: v.whatsapp,
         email: v.email, address: v.address, mapEmbedUrl: v.mapEmbedUrl, logoUrl: v.logoUrl,
-        accentColor: v.accentColor, currency: v.currency, currencyPosition: v.currencyPosition,
+        accentColor: v.accentColor, festiveTheme: v.festiveTheme, currency: v.currency, currencyPosition: v.currencyPosition,
         hours: hours, vehicleTypes: vehicleTypes,
         social: { facebook: v['social.facebook'], instagram: v['social.instagram'], tiktok: v['social.tiktok'], x: v['social.x'] }
       }).then(function () {

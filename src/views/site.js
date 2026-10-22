@@ -3,6 +3,8 @@
  * so the admin panel is the only place anyone needs to edit content.
  */
 
+const { diwaliOn, renderDiwaliHero } = require('./diwali');
+
 const esc = (v) =>
   String(v ?? '')
     .replace(/&/g, '&amp;')
@@ -103,8 +105,13 @@ function renderBubbles() {
 }
 
 /** Two crossing tape-style tickers under the hero: service names + selling points. */
-function renderTicker(services, s) {
-  const words = [...services.map((x) => x.name), ...((s.sections.about && s.about.points) || [])];
+function renderTicker(services, s, festive) {
+  const words = [
+    ...(festive ? ['Shubh Deepavali 🪔'] : []),
+    ...services.map((x) => x.name),
+    ...(festive ? ['Diwali-ready shine ✨'] : []),
+    ...((s.sections.about && s.about.points) || [])
+  ];
   if (!words.length) return '';
   const row = (list) => {
     const items = list.map((w) => `<span>${esc(w)}</span>`).join('');
@@ -377,6 +384,7 @@ function render(data) {
   const gallery = sec.gallery ? live(data.gallery) : [];
   const reviews = sec.testimonials ? live(data.testimonials) : [];
   const showBooking = sec.booking && s.booking.enabled;
+  const festive = diwaliOn(s, today);
   const avgRating = reviews.length ? reviews.reduce((sum, t) => sum + (Number(t.rating) || 0), 0) / reviews.length : 0;
 
   const nav = [
@@ -405,9 +413,10 @@ ${s.logoUrl ? `<meta property="og:image" content="${esc(s.logoUrl)}">` : ''}
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/site.css">
+${festive ? '<link rel="stylesheet" href="/css/diwali.css">' : ''}
 <style>:root{--accent:${esc(s.accentColor || '#0ea5e9')}}</style>
 </head>
-<body data-currency="${esc(s.currency)}" data-currency-pos="${esc(s.currencyPosition)}">
+<body${festive ? ' class="diwali"' : ''} data-currency="${esc(s.currency)}" data-currency-pos="${esc(s.currencyPosition)}">
 <div class="scroll-progress" aria-hidden="true"></div>
 ${
   s.phone || s.email
@@ -442,6 +451,7 @@ ${
     </nav>
     <button class="burger" id="burger" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button>
   </div>
+  ${festive ? '<div class="toran" aria-hidden="true"></div>' : ''}
 </header>
 
 <main>
@@ -457,9 +467,10 @@ ${
     <span class="hero-blob a" aria-hidden="true"></span>
     <span class="hero-blob b" aria-hidden="true"></span>
     <span class="hero-blob c" aria-hidden="true"></span>
-    ${renderBubbles()}
-    <span class="hero-sticker" aria-hidden="true">🫧 fresh.<br>clean.<br>iconic.</span>
+    ${festive ? renderDiwaliHero() : renderBubbles()}
+    <span class="hero-sticker" aria-hidden="true">${festive ? '🪔 Happy<br>Diwali!' : '🫧 fresh.<br>clean.<br>iconic.'}</span>
     <div class="wrap hero-inner">
+      ${festive ? '<p class="diwali-greet">✨ Shubh Deepavali ✨<span>Make your ride shine brighter than the diyas this festive season</span></p>' : ''}
       <span class="eyebrow light">${esc(s.tagline)}</span>
       <h1>${esc(s.hero.title)}</h1>
       <p>${esc(s.hero.subtitle)}</p>
@@ -493,7 +504,7 @@ ${
       }
     </div>
   </section>
-  ${renderTicker(services, s)}
+  ${renderTicker(services, s, festive)}
 
   ${renderOffers(offers, s)}
   ${renderServices(services, s, showBooking)}

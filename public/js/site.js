@@ -83,13 +83,103 @@
     });
   }
 
+  // --- Diwali: fireworks over the hero + golden sparkle cursor trail ---
+  var diwali = document.body.classList.contains('diwali');
+  var fwCanvas = document.querySelector('.fireworks');
+  if (diwali && fwCanvas && fwCanvas.getContext && !reducedMotion) {
+    var ctx = fwCanvas.getContext('2d');
+    var heroEl = fwCanvas.parentNode;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    var W = 0, H = 0, rockets = [], sparks = [], heroVisible = true, lastLaunch = 0;
+    var palette = ['#ffd23f', '#ff9f1c', '#ff4d6d', '#e11d74', '#fff3b0', '#ffb400', '#7ee8fa', '#c77dff'];
+    var resize = function () {
+      W = heroEl.clientWidth; H = heroEl.clientHeight;
+      fwCanvas.width = W * dpr; fwCanvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    window.addEventListener('resize', resize);
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (e) { heroVisible = e[0].isIntersecting; }).observe(heroEl);
+    }
+    var launch = function (x, y) {
+      rockets.push({
+        x: x == null ? W * (.12 + Math.random() * .76) : x, y: H,
+        vx: (Math.random() - .5) * 1.2, vy: -(H / 55 + Math.random() * 3),
+        ty: y == null ? H * (.12 + Math.random() * .3) : y,
+        color: palette[(Math.random() * palette.length) | 0]
+      });
+    };
+    var burst = function (r) {
+      var n = 60 + ((Math.random() * 40) | 0);
+      var ring = Math.random() < .35;
+      var alt = palette[(Math.random() * palette.length) | 0];
+      for (var i = 0; i < n; i++) {
+        var a = (i / n) * Math.PI * 2;
+        var sp = ring ? 4.2 : 1 + Math.random() * 4.5;
+        sparks.push({ x: r.x, y: r.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 1, decay: .012 + Math.random() * .014, color: i % 3 ? r.color : alt, size: 1.4 + Math.random() * 1.6 });
+      }
+    };
+    var frame = function (t) {
+      requestAnimationFrame(frame);
+      if (!heroVisible || document.hidden) return;
+      if (t - lastLaunch > 900 + Math.random() * 900) { launch(); lastLaunch = t; }
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.fillStyle = 'rgba(0,0,0,.22)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'lighter';
+      for (var i = rockets.length - 1; i >= 0; i--) {
+        var r = rockets[i];
+        r.x += r.vx; r.y += r.vy; r.vy *= .985;
+        ctx.fillStyle = '#fff3b0';
+        ctx.beginPath(); ctx.arc(r.x, r.y, 2, 0, Math.PI * 2); ctx.fill();
+        if (r.y <= r.ty || r.vy > -1) { burst(r); rockets.splice(i, 1); }
+      }
+      for (var j = sparks.length - 1; j >= 0; j--) {
+        var p = sparks[j];
+        p.x += p.vx; p.y += p.vy; p.vx *= .97; p.vy = p.vy * .97 + .045; p.life -= p.decay;
+        if (p.life <= 0) { sparks.splice(j, 1); continue; }
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillStyle = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    };
+    requestAnimationFrame(frame);
+    // tap/click the sky to launch your own firework
+    heroEl.addEventListener('click', function (e) {
+      if (e.target.closest('a, button')) return;
+      var rect = heroEl.getBoundingClientRect();
+      launch(e.clientX - rect.left, e.clientY - rect.top);
+    });
+  }
+  if (diwali && finePointer && !reducedMotion) {
+    var lastSpark = 0;
+    document.addEventListener('pointermove', function (e) {
+      var now = Date.now();
+      if (now - lastSpark < 40) return;
+      lastSpark = now;
+      var s = document.createElement('span');
+      s.className = 'spark';
+      s.style.left = e.clientX - 3 + 'px';
+      s.style.top = e.clientY - 3 + 'px';
+      document.body.appendChild(s);
+      s.animate([
+        { transform: 'translate(0,0) scale(1)', opacity: 1 },
+        { transform: 'translate(' + (Math.random() * 20 - 10) + 'px,' + (14 + Math.random() * 16) + 'px) scale(0)', opacity: 0 }
+      ], { duration: 700, easing: 'ease-out' }).onfinish = function () { s.remove(); };
+    }, { passive: true });
+  }
+
   // --- emoji confetti burst from an element ---
   function confetti(fromEl) {
     if (reducedMotion || !fromEl || !fromEl.animate) return;
     var r = fromEl.getBoundingClientRect();
     var cx = r.left + r.width / 2;
     var cy = r.top + r.height / 2;
-    var bits = ['🫧', '✨', '🚗', '💦', '⭐', '🎉', '💙', '🫧'];
+    var bits = document.body.classList.contains('diwali')
+      ? ['🪔', '✨', '🎆', '🌼', '💛', '🎇', '🚗', '🪔']
+      : ['🫧', '✨', '🚗', '💦', '⭐', '🎉', '💙', '🫧'];
     for (var i = 0; i < 32; i++) {
       var el = document.createElement('span');
       el.className = 'confetti';

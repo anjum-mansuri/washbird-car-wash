@@ -23,6 +23,7 @@ function seed() {
       currency: 'AED',
       currencyPosition: 'before', // before | after
       accentColor: '#0ea5e9',
+      festiveTheme: 'auto',
       phone: '+971 50 123 4567',
       whatsapp: '971501234567',
       email: 'hello@aquashine.example',
