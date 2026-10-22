@@ -1,6 +1,6 @@
 # Washbird Car Care — Project Notes
 
-Working notes for this project: what it is, current state, what's still a placeholder, and how to pick it back up. (For end-user / setup docs, see [README.md](README.md).)
+Working notes for this project: what it is, current state, what's still a placeholder, and how to pick it back up. (For end-user / setup docs, see [README.md](README.md). For the site's look, Diwali theme and the mascot bird, see [SITE-DESIGN.md](SITE-DESIGN.md).)
 
 ## What this is
 
@@ -122,3 +122,6 @@ Until this clears, the practical way to show anyone the current site is the Clou
 - Small "Site by Dr. Anjum" builder credit added to the footer, top-right, with its own logo
 - Vercel deployment: dual-mode storage (file locally, Upstash Redis + Vercel Blob on Vercel) — see Vercel section above for status
 - Booking form: coupon codes with live discount, per-service custom time slots, "Starting from" pricing for Deep Interior Wash — see Booking form features above
+- Gen Z visual refresh (bold fonts, neo-brutal cards, ticker tapes, chat-bubble reviews, polaroid gallery, booking confetti) — see [SITE-DESIGN.md](SITE-DESIGN.md)
+- Diwali festive theme with admin switch (Settings → Festive theme: Auto / Always on / Off) — see [SITE-DESIGN.md](SITE-DESIGN.md)
+- Washbird mascot bird: flies in and perches on the header logo; tap it to make it fly a loop — see [SITE-DESIGN.md](SITE-DESIGN.md)
