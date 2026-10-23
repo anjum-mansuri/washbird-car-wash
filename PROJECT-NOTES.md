@@ -83,14 +83,10 @@ Chose to deploy on **Vercel**. Since Vercel has no persistent disk, the storage 
 
 This is real, tested code, not a plan — see commits "Add dual-mode storage/uploads for Vercel deployment" and "Fix data loss on Vercel: await every save before responding" (the second one fixed a genuine bug caught during testing: the debounced save scheduled a write 120ms later via `setTimeout`, but Vercel can freeze a function the instant its response is sent, so the write sometimes never happened. Redis saves are now immediate and awaited before responding).
 
-**Current blocker — not our code, Vercel's account-side issue:**
-- Vercel account: `aymljku-7193` (project `washbird-car-wash`), connected via `vercel` CLI, logged in on this machine.
-- Upstash Redis database `champion-bison-98030` created and connected; the real content was migrated into it.
-- The **first** deployment succeeded and is live at **https://washbird-car-wash.vercel.app** — but it's running the code from *before* the storage rework, so don't rely on it for anything yet.
-- **Every deployment since then gets stuck with `readyState: BLOCKED`** (confirmed via the Vercel REST API directly, not just the CLI) — a build that never starts. This matches a known issue reported by other people with brand-new Hobby accounts (see Vercel community forum thread on this exact symptom). It is not caused by anything in this code — a local `vercel build` completes successfully every time.
-- **Not yet resolved.** Options for next time: wait it out (new-account review flags sometimes clear on their own after a day or two), check for a Vercel email about account verification, or contact Vercel support. Don't spend more time guessing at CLI workarounds — this needs either time or Vercel's own intervention.
-
-Until this clears, the practical way to show anyone the current site is the Cloudflare tunnel (below), not the Vercel URL.
+**Status (updated 2026-10-23): working.** Pushes to `master` now auto-deploy to **https://washbird-car-wash.vercel.app** in about 30–45 seconds. This is the live, public link.
+- Vercel account: `aymljku-7193` (project `washbird-car-wash`); Upstash Redis database `champion-bison-98030` holds content/bookings.
+- The earlier `BLOCKED` deployment problem has cleared on its own.
+- The old Railway link (`washbird-car-wash-production.up.railway.app`) now returns "Application not found" — the Railway service is gone or paused, and the Railway CLI login on this machine has expired. Use the Vercel link.
 
 ## Source control
 
@@ -101,8 +97,9 @@ Until this clears, the practical way to show anyone the current site is the Clou
 
 ## Open items / next decisions
 
-- [ ] **Fix the mobile coupon-row overflow bug** (see Booking form features above) — first thing to look at next session
-- [ ] **Get Vercel's `BLOCKED` deployments unstuck** (see Vercel section above), then promote the latest deployment to production
+- [x] Fix the mobile coupon-row overflow bug — fixed 2026-10-22
+- [x] Vercel deployments unstuck — auto-deploying again as of 2026-10-22
+- [ ] Booking alerts: new bookings only show in Admin → Bookings (no email/WhatsApp notification yet)
 - [ ] Fill in real phone, WhatsApp, email, and address in Settings
 - [ ] Add a real Google Maps embed link once there's an address
 - [ ] Change the default admin password

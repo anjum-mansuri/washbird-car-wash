@@ -80,3 +80,13 @@ Visitors whose device has **"reduce motion"** turned on get the same design with
 - Booking confetti tested with a mocked request (no test booking saved)
 - Bird: entrance, perching after scroll, tap-to-fly on mouse and touch, repeat taps
 - Fixed along the way: coupon-code row overflowing the booking form on narrow phones
+
+## Update log
+
+| Date | Change | Commit |
+|---|---|---|
+| 2026-10-22 | Gen Z visual refresh + mobile coupon-row fix | `643ba03` |
+| 2026-10-22 | Diwali festive theme with admin switch | `faa1978` |
+| 2026-10-22 | Washbird mascot flies in and perches on the logo | `6c36537` |
+| 2026-10-22 | Tap the bird to make it fly a loop | `4d0a351` |
+| 2026-10-22 | This design document added | `9b8f8d2` |
